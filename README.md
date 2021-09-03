@@ -2,6 +2,17 @@
 
 functions to handle SNP data, especially from the UKB.
 
+```
+>>> import jusnp
+>>> genotypes = jusnp.vcf2genotype('snp_epilepsy.vcf')
+>>> genotypes
+                         4303212 3351913 2982758  ... 1709854 5348682 5862730
+rs2535288,6:31064007_C_A      CA      CA      CA  ...      CA      CC      CA
+rs2858870,6:32572251_T_C      TT      TT      TT  ...      TT      TT      TT
+
+[2 rows x 487409 columns]
+```
+
 # resources
 
 
