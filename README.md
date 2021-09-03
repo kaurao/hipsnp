@@ -1,10 +1,10 @@
-# jusnp
+# hipsnp
 
 functions to handle SNP data, especially from the UKB.
 
 ```
->>> import jusnp
->>> genotypes = jusnp.vcf2genotype('snp_epilepsy.vcf')
+>>> import hipsnp
+>>> genotypes = hipsnp.vcf2genotype('snp_epilepsy.vcf')
 >>> genotypes
                          4303212 3351913 2982758  ... 1709854 5348682 5862730
 rs2535288,6:31064007_C_A      CA      CA      CA  ...      CA      CC      CA
