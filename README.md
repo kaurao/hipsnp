@@ -34,6 +34,7 @@ https://www.well.ox.ac.uk/~gav/qctool/
 
 https://faculty.washington.edu/browning/intro-to-vcf.html
 
+https://www.reneshbedre.com/blog/vcf-fields.html
 
 https://www.garvan.org.au/research/kinghorn-centre-for-clinical-genomics/learn-about-genomics/for-gp/genetics-refresher-1/types-of-variants
 
