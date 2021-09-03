@@ -89,6 +89,7 @@ def rsid2vcf(rsids, outdir,
         if len(rs_ch) < 11:
             print('rsids: ' + str(rs_ch) + '\n')
         # get the data
+        print('datalad: getting files')
         files, ds = datalad_get_chromosome(ch, source=datalad_source)
         # find the bgen and sample files
         file_bgen = None
@@ -104,13 +105,17 @@ def rsid2vcf(rsids, outdir,
 
         assert file_bgen is not None and file_sample is not None
         file_rsids = os.path.join(outdir, 'rsids_chromosome' + str(ch) + '.txt')
+        df = pd.DataFrame(rs_ch)
+        df.to_csv(file_rsids, index=False, header=False)
+
         file_vcf = os.path.join(outdir, 'chromosome' + str(ch) + '.vcf')
         cmd = qctool + ' -g ' + file_bgen + ' -s ' + file_sample \
               + ' -incl-rsids ' + file_rsids  + ' -og ' + file_vcf
-        printf('running qctool:' + cmd  + '\n')
-        subprocess.run(cmd)
+        print('running qctool: ' + cmd  + '\n')
+        os.system(cmd)
 
         if datalad_drop:
+            print('datalad: dropping files')
             ds.drop(files)
 
         print('done with chromosome ' + str(ch) + '\n')
