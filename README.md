@@ -32,6 +32,8 @@ https://www.well.ox.ac.uk/~gav/qctool/
 
 ## Info
 
+https://eu.idtdna.com/pages/education/decoded/article/genotyping-terms-to-know
+
 https://faculty.washington.edu/browning/intro-to-vcf.html
 
 https://www.reneshbedre.com/blog/vcf-fields.html
