@@ -31,8 +31,8 @@ def datalad_get_chromosome(c,
 
     ds = datalad.clone(source=source, path=path)
     files = glob.glob(os.path.join(ds.path, imputationdir, '*_c' + str(c) + '_*'))
-    ds.get(files)
-    return files, ds
+    getout = ds.get(files)
+    return files, ds, getout
 
 
 def rsid2chromosome(rsids):
@@ -61,6 +61,7 @@ def rsid2vcf(rsids, outdir,
         datalad_source="ria+http://ukb.ds.inm7.de#~genetic",
         qctool=None,
         datalad_drop=True,
+        datalad_drop_if_got=True,
         tmpdir='/tmp'):
     # check if qctool is available
     if qctool is None:
@@ -88,9 +89,16 @@ def rsid2vcf(rsids, outdir,
         print('chromosome ' + str(ch) + ' with ' + str(len(rs_ch)) + ' rsids\n')
         if len(rs_ch) < 11:
             print('rsids: ' + str(rs_ch) + '\n')
+
         # get the data
         print('datalad: getting files')
-        files, ds = datalad_get_chromosome(ch, source=datalad_source)
+        files, ds, getout = datalad_get_chromosome(ch, source=datalad_source)
+        for fi in range(len(getout)):
+            status = getout[fi]['status']
+            if status != 'ok' or status != 'notneeded':
+                print('datalad problem while getting: ' + getout[fi]['path'])
+                raise
+
         # find the bgen and sample files
         file_bgen = None
         file_sample = None
@@ -116,7 +124,12 @@ def rsid2vcf(rsids, outdir,
 
         if datalad_drop:
             print('datalad: dropping files')
-            ds.drop(files)
+            if datalad_drop_if_got:
+                for for fi in range(len(getout)):
+                    if getout[fi]['status'] == 'ok' and getout[fi]['type'] == 'file':
+                        ds.drop(files[fi])
+            else:
+                ds.drop(files)
 
         print('done with chromosome ' + str(ch) + '\n')
 
