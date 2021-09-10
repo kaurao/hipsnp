@@ -1,5 +1,7 @@
 # hipsnp
 
+ <<< This is a development version, there is no any warranty that it works >>>
+
 functions to handle SNP data, especially from the UKB.
 
 ```
