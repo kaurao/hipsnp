@@ -10,7 +10,13 @@ from datalad import api as datalad
 def ensembl_human_rsid(rsid):
     """
     make a REST call to ensemble and return json info of a variant given a rsid
+    rsid: string
+    returns: json object
     """
+    if not isinstance(rsid, str) or rsid[0:2] != 'rs':
+        print('rsid must be a string with a starting "rs"')
+        raise
+    
     url = 'http://rest.ensembl.org/variation/human/' + rsid + '?content-type=application/json'
     response = requests.get(url)
     return response
@@ -22,6 +28,11 @@ def datalad_get_chromosome(c,
         path=None):
     """
     get a particular chromosome's (imputed) data
+    c: chromosome number, string
+    source: datalad source, string (default: None which maps to 'ria+http://ukb.ds.inm7.de#~genetic')
+    imputationdir: directory in which the imputation files are stored, string (default: 'imputation')
+    path: directory to use for the datalad dataset, string (default: None which maps to '/tmp/genetic')
+    returns: list of files, datalad dataset object, list of datalad get output
     """
     if source is None or source == '':
         source="ria+http://ukb.ds.inm7.de#~genetic"
@@ -36,6 +47,11 @@ def datalad_get_chromosome(c,
 
 
 def rsid2chromosome(rsids):
+    """
+    get the chromosome of each rsid
+    rsids: list of rsids, string or list of strings
+    returns: dataframe with columns 'rsids' and 'chromosomes'
+    """
     if isinstance(rsids, str) and os.path.isfile(rsids):
         rsids = pd.read_csv(rsids, header=None)
         rsids = list(rsids.iloc[:,0])
@@ -62,7 +78,16 @@ def rsid2vcf(rsids, outdir,
         qctool=None,
         datalad_drop=True,
         datalad_drop_if_got=True,
-        tmpdir='/tmp'):
+        datalad_dir=None):
+    """
+    get vcf files for a list of rsids
+    rsids: list of rsids, string or list of strings
+    datalad_source: datalad source, string (default: 'ria+http://ukb.ds.inm7.de#~genetic')
+    qctool: path to qctool, string (default: None, which maps to 'qctool')
+    datalad_drop: whether to drop the datalad dataset after getting the files, bool (default: True)
+    datalad_drop_if_got: whether to drop files only if downloaded with get, bool (default: True)
+    datalad_dir: directory to use for the datalad dataset, string (default: None which maps to '/tmp/genetic')
+    """
     # check if qctool is available
     if qctool is None:
         qctool = shutil.which('qctool')
@@ -92,7 +117,7 @@ def rsid2vcf(rsids, outdir,
 
         # get the data
         print('datalad: getting files')
-        files, ds, getout = datalad_get_chromosome(ch, source=datalad_source)
+        files, ds, getout = datalad_get_chromosome(ch, source=datalad_source, path=datalad_dir)
         for fi in range(len(getout)):
             status = getout[fi]['status']
             if status != 'ok' or status != 'notneeded':
