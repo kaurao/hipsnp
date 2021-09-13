@@ -120,8 +120,11 @@ def rsid2vcf(rsids, outdir,
         files, ds, getout = datalad_get_chromosome(ch, source=datalad_source, path=datalad_dir)
         for fi in range(len(getout)):
             status = getout[fi]['status']
-            if status != 'ok' or status != 'notneeded':
-                print('datalad problem while getting: ' + getout[fi]['path'])
+            print('datalad: status ' + str(status) + ' file ' + str(files[fi]))
+            if status != 'ok' and status != 'notneeded':
+                print('datalad: error getting file ' \
+                + str(fi) + ': ' + str(getout[fi]['path']) + '\n')
+                # todo: cleanup datalad files      
                 raise
 
         # find the bgen and sample files
@@ -150,7 +153,7 @@ def rsid2vcf(rsids, outdir,
         if datalad_drop:
             print('datalad: dropping files')
             if datalad_drop_if_got:
-                for for fi in range(len(getout)):
+                for fi in range(len(getout)):
                     if getout[fi]['status'] == 'ok' and getout[fi]['type'] == 'file':
                         ds.drop(files[fi])
             else:
@@ -226,4 +229,12 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
                     labels[sam][snp] = ALT + ALT
 
     return labels
+
+
+def vcf2prs(files, weights):
+    """
+    given a list of vcf files and a list of weights, returns a pandas df with
+    the prs
+    """
+    # todo
 
