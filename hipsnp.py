@@ -311,10 +311,81 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
     return labels
 
 
-def vcf2prs(files, weights):
+def vcf2prs(vcf_files, weight_file, samples=None, weight_EA=2.0):
     """
-    given a list of vcf files and a list of weights, returns a pandas df with
-    the prs
+    given a list of vcf files and a file with weights, returns a pandas df with
+    the polygenic risk scores for each sample
+    vcf_files: list of vcf files or a directory with vcf files, str or list of str
+    weight_file: file with weights (must contain header and columns snpid/rsid, ea and weight), str
+    samples: list of samples to use, list of str (default: None, which means all samples)
+    weight_EA: weight for EA, float (default: 2.0)
+    returns: polygenic risk score for each sample, pandas df
     """
-    # todo
+    assert os.path.isfile(weight_file)
 
+    if not isinstance(vcf_files, list) and os.path.isdir(vcf_files):
+        vcf_files = glob.glob(vcf_files + '/*.vcf')
+    
+    assert isinstance(vcf_files, list)
+    assert len(vcf_files) > 0
+
+    weights = pd.read_csv(weight_file, sep='\t')
+    weights.columns = [x.lower() for x in weights.columns]
+
+    assert 'ea' in weights.columns
+    assert 'weight' in weights.columns
+
+    if 'snpid' in weights.columns:
+        rsidcol = 'snpid'
+    elif 'rsid' in weights.columns:
+        rsidcol = 'rsid'
+    else:
+        print('no rsid column in weight file')
+        raise
+    
+    # read all the vcf_files
+    print('reading ' + str(len(vcf_files)) + ' vcf files... ', end='')
+    vcf = [read_vcf(vcf) for vcf in vcf_files]
+    vcf = pd.concat(vcf)
+    print('done')
+    # qctool vcf file ID conrains rsID,loc_info
+    # convert to rsID and set it as index to later use
+    rsids_vcf = [x.split(',')[0] for x in vcf['ID']]
+    vcf.index = rsids_vcf
+
+    # make sure all rsIDs are available    
+    rsids_weights = weights[rsidcol].tolist()
+    assert len(rsids_weights) == len(set(rsids_weights))
+    assert set(rsids_weights).issubset(set(rsids_vcf))
+    print('weight file contains ' + str(len(rsids_weights)) + ' rsids')
+
+    nsnp = vcf.shape[0]
+    ncol = vcf.shape[1]
+    if samples is None:
+        samples = [vcf.columns[i] for i in range(9, ncol)]
+    else:
+        assert all(sam in list(vcf.columns) for sam in samples)
+    
+    print('calculating PRS... ', end='')
+    PRS = pd.DataFrame(0, index=range(1), columns=range(len(samples)))
+    PRS.columns = samples
+    for snp in rsids_weights:
+        REF = vcf['REF'][snp]
+        ALT = vcf['ALT'][snp]
+        EA  = weights['ea'][weights[rsidcol] == snp].values[0]
+        for sam in samples:
+            GP = vcf[sam][snp]
+            GP = [float(x) for x in GP.split(',')]
+            if ALT == EA:
+                ds = GP[1] + weight_EA*GP[2]
+            elif REF == EA:
+                ds = GP[1] + weight_EA*GP[0]
+            else:
+                print('SNP ' + snp + ' ALT ' + ALT + ' or REF ' + REF + \
+                    ' do not match EA ' + EA)
+                raise
+        
+            PRS[sam] += ds*weights['weight'][weights[rsidcol] == snp].values[0]
+    print('done')
+    return PRS
+    
