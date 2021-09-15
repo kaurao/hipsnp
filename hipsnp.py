@@ -5,7 +5,9 @@ import shutil
 import subprocess
 import requests
 import pandas as pd
+import numpy as np
 from datalad import api as datalad
+from alive_progress import alive_it
 
 def ensembl_human_rsid(rsid):
     """
@@ -295,9 +297,17 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
     for snp in snps_index:
         REF = vcf['REF'][snp]
         ALT = vcf['ALT'][snp]
-        for sam in samples:
-            GP = vcf[sam][snp]
-            GP = [float(x) for x in GP.split(',')]
+        for sam in alive_it(samples):
+            try:
+                GP = vcf[sam][snp]
+                GP = [float(x) for x in GP.split(',')]
+            except:
+                print('error reading sample ' + str(sam) + \
+                      ' snp ' + str(snp) + ': ' + str(GP))
+                #raise                
+                continue
+            assert len(GP) == 3
+            # quirky way to get argmax, can simply use np.argmax
             f = lambda i: GP[i]
             GT = max(range(len(GP)), key=f)
             if GP[GT] >= th:
@@ -311,14 +321,15 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
     return labels
 
 
-def vcf2prs(vcf_files, weight_file, samples=None, weight_EA=2.0):
+def vcf2prs(vcf_files, weight_file, samples=None, weightEA=2.0, outfile=None):
     """
     given a list of vcf files and a file with weights, returns a pandas df with
     the polygenic risk scores for each sample
     vcf_files: list of vcf files or a directory with vcf files, str or list of str
     weight_file: file with weights (must contain header and columns snpid/rsid, ea and weight), str
     samples: list of samples to use, list of str (default: None, which means all samples)
-    weight_EA: weight for EA, float (default: 2.0)
+    weightEA: weight for EA, float (default: 2.0)
+    outfile: file to write the output, str (default: None, which means no file written)
     returns: polygenic risk score for each sample, pandas df
     """
     assert os.path.isfile(weight_file)
@@ -334,7 +345,6 @@ def vcf2prs(vcf_files, weight_file, samples=None, weight_EA=2.0):
 
     assert 'ea' in weights.columns
     assert 'weight' in weights.columns
-
     if 'snpid' in weights.columns:
         rsidcol = 'snpid'
     elif 'rsid' in weights.columns:
@@ -342,22 +352,22 @@ def vcf2prs(vcf_files, weight_file, samples=None, weight_EA=2.0):
     else:
         print('no rsid column in weight file')
         raise
+    rsids_weights = weights[rsidcol].tolist()
+    assert len(rsids_weights) == len(set(rsids_weights))     
+    print('weight file contains ' + str(len(rsids_weights)) + ' rsids')
     
     # read all the vcf_files
-    print('reading ' + str(len(vcf_files)) + ' vcf files... ', end='')
-    vcf = [read_vcf(vcf) for vcf in vcf_files]
-    vcf = pd.concat(vcf)
-    print('done')
+    print('reading ' + str(len(vcf_files)) + ' vcf files... ')
+    vcf = pd.DataFrame()
+    for vf in alive_it(vcf_files):
+        vcf = vcf.append(read_vcf(vf))
     # qctool vcf file ID conrains rsID,loc_info
     # convert to rsID and set it as index to later use
     rsids_vcf = [x.split(',')[0] for x in vcf['ID']]
     vcf.index = rsids_vcf
 
-    # make sure all rsIDs are available    
-    rsids_weights = weights[rsidcol].tolist()
-    assert len(rsids_weights) == len(set(rsids_weights))
+    # make sure all rsIDs are available
     assert set(rsids_weights).issubset(set(rsids_vcf))
-    print('weight file contains ' + str(len(rsids_weights)) + ' rsids')
 
     nsnp = vcf.shape[0]
     ncol = vcf.shape[1]
@@ -366,26 +376,47 @@ def vcf2prs(vcf_files, weight_file, samples=None, weight_EA=2.0):
     else:
         assert all(sam in list(vcf.columns) for sam in samples)
     
-    print('calculating PRS... ', end='')
+    print('calculating PRS for ' + str(len(samples)) + ' samples ... ')
     PRS = pd.DataFrame(0, index=range(1), columns=range(len(samples)))
     PRS.columns = samples
     for snp in rsids_weights:
         REF = vcf['REF'][snp]
         ALT = vcf['ALT'][snp]
         EA  = weights['ea'][weights[rsidcol] == snp].values[0]
-        for sam in samples:
-            GP = vcf[sam][snp]
-            GP = [float(x) for x in GP.split(',')]
+        weightSNP = weights['weight'][weights[rsidcol] == snp].values[0]
+        for sam in alive_it(samples):
+            try:
+                GP = vcf[sam][snp]
+                GP = [float(x) for x in GP.split(',')]
+            except:
+                print('error reading sample ' + str(sam) + \
+                      ' snp ' + str(snp) + ': ' + str(GP))
+                #raise
+                PRS[sam] = np.nan
+                continue
+            assert len(GP) == 3
+            pHomoREF = GP[0]
+            pHetero  = GP[1]
+            pHomoALT = GP[2]
             if ALT == EA:
-                ds = GP[1] + weight_EA*GP[2]
+                ds = pHetero + weightEA*pHomoALT
             elif REF == EA:
-                ds = GP[1] + weight_EA*GP[0]
+                ds = pHetero + weightEA*pHomoREF
             else:
                 print('SNP ' + snp + ' ALT ' + ALT + ' or REF ' + REF + \
-                    ' do not match EA ' + EA)
-                raise
-        
-            PRS[sam] += ds*weights['weight'][weights[rsidcol] == snp].values[0]
-    print('done')
+                      ' do not match EA ' + EA)
+                raise        
+            PRS[sam] += ds*weightSNP
+
+    if outfile is not None:
+        if isinstance(outfile, str):        
+            print('writing file: ' + outfile)
+            try:
+                PRS.to_csv(outfile, sep='\t')
+            except:
+                print('error writing file: ' + outfile)                
+        else:
+            print('outfile argument is not a string, no file written')
+
     return PRS
     
