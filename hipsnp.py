@@ -265,6 +265,8 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
     given a vcf file path or a pandas df from read_vcf returns genotypes
     """
     if isinstance(vcf ,str):
+        assert os.path.isfile(vcf)
+        print('reading vcf file: ' + vcf)
         vcf = read_vcf(vcf)
     elif isinstance(vcf, pd.DataFrame):
         pass
@@ -294,6 +296,8 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
     labels.index = snps
     labels.columns = samples
     snps_index = [snps.index(snp) for snp in snps]
+    print('calculating genotypes for ' + str(len(snps_index)) + ' SNPs and ' + \
+          str(len(samples)) + ' samples ... ')
     for snp in snps_index:
         REF = vcf['REF'][snp]
         ALT = vcf['ALT'][snp]
@@ -321,14 +325,13 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
     return labels
 
 
-def vcf2prs(vcf_files, weight_file, samples=None, weightEA=2.0, outfile=None):
+def vcf2prs(vcf_files, weight_file, samples=None, outfile=None):
     """
     given a list of vcf files and a file with weights, returns a pandas df with
     the polygenic risk scores for each sample
     vcf_files: list of vcf files or a directory with vcf files, str or list of str
     weight_file: file with weights (must contain header and columns snpid/rsid, ea and weight), str
-    samples: list of samples to use, list of str (default: None, which means all samples)
-    weightEA: weight for EA, float (default: 2.0)
+    samples: list of samples to use, list of str (default: None, which means all samples)    
     outfile: file to write the output, str (default: None, which means no file written)
     returns: polygenic risk score for each sample, pandas df
     """
@@ -383,7 +386,9 @@ def vcf2prs(vcf_files, weight_file, samples=None, weightEA=2.0, outfile=None):
         REF = vcf['REF'][snp]
         ALT = vcf['ALT'][snp]
         EA  = weights['ea'][weights[rsidcol] == snp].values[0]
+        assert isinstance(EA, str)
         weightSNP = weights['weight'][weights[rsidcol] == snp].values[0]
+        assert isinstance(weightSNP, float)
         for sam in alive_it(samples):
             try:
                 GP = vcf[sam][snp]
@@ -396,17 +401,17 @@ def vcf2prs(vcf_files, weight_file, samples=None, weightEA=2.0, outfile=None):
                 continue
             assert len(GP) == 3
             pHomoREF = GP[0]
-            pHetero  = GP[1]
+            pHeteroz = GP[1]
             pHomoALT = GP[2]
-            if ALT == EA:
-                ds = pHetero + weightEA*pHomoALT
-            elif REF == EA:
-                ds = pHetero + weightEA*pHomoREF
+            if EA == REF:
+                dosage = pHeteroz + 2*pHomoREF
+            elif EA == ALT:
+                dosage = pHeteroz + 2*pHomoALT
             else:
                 print('SNP ' + snp + ' ALT ' + ALT + ' or REF ' + REF + \
                       ' do not match EA ' + EA)
                 raise        
-            PRS[sam] += ds*weightSNP
+            PRS[sam] += dosage*weightSNP
 
     if outfile is not None:
         if isinstance(outfile, str):        
