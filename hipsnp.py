@@ -86,7 +86,7 @@ def rsid2chromosome(rsids, chromosomes=None):
     df['rsids'] = rsids
     return df
 
-def rsid2vcf(rsids, outdir,        
+def rsid2vcf(rsids, outdir,
         datalad_source="ria+http://ukb.ds.inm7.de#~genetic",
         qctool=None,
         datalad_drop=True,
@@ -186,15 +186,18 @@ def rsid2vcf(rsids, outdir,
         print('running qctool: ' + cmd  + '\n')
         os.system(cmd)
 
-        if datalad_drop:            
+        if datalad_drop:
+            # must use relative paths???
+            common_prefix = os.path.commonprefix([files[0], ds.path])
+            files_rel = [os.path.relpath(path, common_prefix) for path in files]
             if datalad_drop_if_got:
                 for fi in range(len(getout)):
                     if getout[fi]['status'] == 'ok' and getout[fi]['type'] == 'file':
-                        print('datalad: dropping file ' +  str(files[fi]) + '\n')
-                        ds.drop(files[fi])
+                        print('datalad: dropping file ' +  str(files_rel[fi]) + '\n')
+                        ds.drop(files_rel[fi])
             else:
                 print('datalad: dropping all files\n')
-                ds.drop(files)
+                ds.drop(files_rel)
 
         print('done with chromosome ' + str(ch) + '\n')
 
@@ -250,6 +253,7 @@ def read_vcf(path):
     taken shameless from: https://gist.github.com/dceoy/99d976a2c01e7f0ba1c813778f9db744
     Thanks Daichi Narushima
     """
+    # todo: keep lines starting with ## as metadata in attrs
     with open(path, 'r') as f:
         lines = [l for l in f if not l.startswith('##')]
     return pd.read_csv(
@@ -286,7 +290,6 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
     else:
         assert all(sam in list(vcf.columns) for sam in samples)
 
-
     if snps is None:
         snps = list(vcf['ID'])
     else:
@@ -316,16 +319,16 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None):
             GT = max(range(len(GP)), key=f)
             if GP[GT] >= th:
                 if GT == 0:
-                    labels[sam][snp] = REF + REF
+                    genotype = REF + REF
                 elif GT == 1:
-                    labels[sam][snp] = REF + ALT
+                    genotype = REF + ALT
                 else:
-                    labels[sam][snp] = ALT + ALT
-
+                    genotype = ALT + ALT
+            labels[sam][snp] = "".join(sorted(genotype))
     return labels
 
 
-def vcf2prs(vcf_files, weight_file, samples=None, outfile=None):
+def vcf2prs(vcf_files, weight_file, samples=None, outfile=None, fail_missing=False):
     """
     given a list of vcf files and a file with weights, returns a pandas df with
     the polygenic risk scores for each sample
@@ -343,18 +346,15 @@ def vcf2prs(vcf_files, weight_file, samples=None, outfile=None):
     assert isinstance(vcf_files, list)
     assert len(vcf_files) > 0
 
-    weights = pd.read_csv(weight_file, sep='\t')
-    weights.columns = [x.lower() for x in weights.columns]
+    weights = pd.read_csv(weight_file, sep='\t', comment='#')
+    weights.columns = [x.lower() for x in weights.columns]    
+    weights.rename(columns={'snpid':'rsid', 'chr_name':'chr', \
+        'effect_allele':'ea', 'effect_weight':'weight'}, inplace = True)    
 
     assert 'ea' in weights.columns
     assert 'weight' in weights.columns
-    if 'snpid' in weights.columns:
-        rsidcol = 'snpid'
-    elif 'rsid' in weights.columns:
-        rsidcol = 'rsid'
-    else:
-        print('no rsid column in weight file')
-        raise
+    assert 'rsid' in weights.columns
+    rsidcol = 'rsid'    
     rsids_weights = weights[rsidcol].tolist()
     assert len(rsids_weights) == len(set(rsids_weights))     
     print('weight file contains ' + str(len(rsids_weights)) + ' rsids')
@@ -370,7 +370,12 @@ def vcf2prs(vcf_files, weight_file, samples=None, outfile=None):
     vcf.index = rsids_vcf
 
     # make sure all rsIDs are available
-    assert set(rsids_weights).issubset(set(rsids_vcf))
+    if fail_missing:
+        print('making sure all rsids are available')
+        assert set(rsids_weights).issubset(set(rsids_vcf))
+    else:
+        rsids_weights = np.intersect1d(rsids_weights, rsids_vcf)
+        print('using intersection of ' + str(len(rsids_weights)) + ' rsids')
 
     nsnp = vcf.shape[0]
     ncol = vcf.shape[1]
