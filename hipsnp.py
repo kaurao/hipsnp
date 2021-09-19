@@ -399,7 +399,7 @@ def vcf2prs(vcf, weights, samples=None, outfile=None, \
     given a list of vcf files and a file with weights, returns a pandas df with
     the polygenic risk scores for each sample
     vcf_files: list of vcf files or a directory with vcf files, str or list of str
-    weight_file: file with weights (must contain header and columns snpid/rsid, ea and weight), str
+    weights: file with weights (must contain header and columns snpid/rsid, ea and weight), str
     samples: list of samples to use, list of str (default: None, which means all samples)    
     outfile: file to write the output, str (default: None, which means no file written)
     returns: polygenic risk score for each sample, pandas df
@@ -413,9 +413,9 @@ def vcf2prs(vcf, weights, samples=None, outfile=None, \
         assert isinstance(vcf, pd.DataFrame)
         vcf_files = None
 
-    if isinstance(weight_file, str):
-        assert os.path.isfile(weight_file)
-        weights = pd.read_csv(weight_file, sep='\t', comment='#')
+    if isinstance(weights, str):
+        assert os.path.isfile(weights)
+        weights = pd.read_csv(weights, sep='\t', comment='#')
     weights.columns = [x.lower() for x in weights.columns]    
     weights.rename(columns={'snpid':'rsid', 'chr_name':'chr', \
         'effect_allele':'ea', 'effect_weight':'weight'}, inplace = True)    
