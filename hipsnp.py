@@ -320,10 +320,14 @@ def read_vcf(vcf_files, rsids_as_index=True, format=['GP', 'GT:GP'], \
     return vcf
 
 
-def vcf2genotype(vcf, th=0.9, snps=None, samples=None, verbose=True):
+def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
+    genotype_format='allele', verbose=True):
     """
     given a vcf file path or a pandas df from read_vcf returns genotypes and probabilities
     """
+    assert isinstance(genotype_format, str)
+    assert genotype_format in ['allele', '012']
+
     if isinstance(vcf ,str):
         assert os.path.isfile(vcf)
         print('reading vcf file: ' + vcf)
@@ -379,21 +383,30 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, verbose=True):
                 probability[sam][snp] = [np.nan]*3
                 continue
             assert len(GP) == 3            
-            GT = np.argmax(GP)
-            if GP[GT] >= th:
+            GT = np.argmax(GP)            
+            if GP[GT] >= th: # homozygous ref
                 if GT == 0:
                     gt = REF + REF
-                elif GT == 1:
+                    gt012 = 0
+                elif GT == 1: # heterozygous
                     gt = REF + ALT
-                else:
+                    gt012 = 1
+                else: # homozygous alt
                     gt = ALT + ALT
-            genotype[sam][snp] = "".join(sorted(gt))
+                    gt012 = 2
+            if genotype_format == 'allele':
+                genotype[sam][snp] = "".join(sorted(gt))
+            elif genotype_format == '012':
+                genotype[sam][snp] = gt012
+            else:
+                print('unknown genotype type')
+                raise
             probability[sam][snp] = GP
     return genotype, probability
 
 
 def vcf2prs(vcf, weights, samples=None, outfile=None, \
-        all_rsids=False, no_neg_samples=False, \
+        all_rsids=False, no_neg_samples=False, allow_missing_rsid=False,\
         verify_integrity=False, vcf_join='inner'):
     """
     given a list of vcf files and a file with weights, returns a pandas df with
@@ -462,7 +475,7 @@ def vcf2prs(vcf, weights, samples=None, outfile=None, \
         EA  = weights['ea'][weights[rsidcol] == snp].values[0]        
         assert isinstance(EA, str) and len(EA) == 1
         weightSNP = weights['weight'][weights[rsidcol] == snp].values[0]
-        assert isinstance(weightSNP, float)
+        weightSNP = float(weightSNP)
         for sam in alive_it(samples):
             try:
                 GP = probability[sam][snp]
@@ -481,7 +494,8 @@ def vcf2prs(vcf, weights, samples=None, outfile=None, \
                 print('error calculating PRS for sample ' + str(sam) + \
                       ' snp ' + str(snp))
                 print(e)
-                PRS[sam] = np.nan
+                if not allow_missing_rsid:
+                    PRS[sam] = np.nan
 
     if outfile is not None:
         if isinstance(outfile, str):        
