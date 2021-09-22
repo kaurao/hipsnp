@@ -393,10 +393,13 @@ def read_vcf(vcf_files, rsids_as_index=True, format=['GP', 'GT:GP'], \
 
 def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
                 genotype_format='allele', probs=None, weights=None, \
-                verbose=True):
+                verbose=True, profiler=None):
     """
     given a vcf file path or a pandas df from read_vcf returns genotypes and probabilities
     """
+    if profiler is not None:        
+        profiler.enable()
+
     assert isinstance(genotype_format, str)
     assert genotype_format in ['allele', '012']
 
@@ -432,16 +435,13 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
         if verbose:
             print('using weights')
         weights = read_weights(weights)
-        riskscore = pd.DataFrame(0, index=range(1), columns=range(len(samples)))
-        riskscore.columns = samples             
+        riskscore = pd.DataFrame(0.0, columns=range(1), index=samples, dtype=float)        
 
-    genotype = pd.DataFrame(index=range(len(snps)), columns=range(len(samples)))
-    genotype.index = snps
-    genotype.columns = samples
-    probability = genotype.copy()    
+    genotype = pd.DataFrame('', columns=snps, index=samples, dtype=str)
+    probability = genotype.copy()
     print('calculating genotypes for ' + str(len(snps)) + ' SNPs and ' + \
           str(len(samples)) + ' samples ... ')
-    for snp in alive_it(snps):
+    for snp in alive_it(snps[0:1]):
         # get SNP info
         try:
             REF = vcf['REF'][snp]
@@ -474,10 +474,7 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
                         snpidx = snpidx[0][0]
                         # probs is transposed samples x snps 
                         GP = pd.DataFrame(probs[pk]['probs'][:, snpidx, :], \
-                            index=probs[pk]['samples'], columns=range(3))
-                        # keep what we need
-                        # todo check if this reorders
-                        GP = GP.reindex(samples).dropna()
+                            index=probs[pk]['samples'], columns=range(3))                        
                         break
             else:
                 # todo: vectorize this
@@ -496,14 +493,15 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
         except Exception as e:
             print(e)
 
-        # use GP to calculate genotype
-        REFREF = REF + REF
-        REFALT = "".join(sorted(REF + ALT))
-        ALTALT = ALT + ALT
+        # keep what we need
+        # todo check if this reorders
+        GP = GP.reindex(samples).dropna()
+        
+        # use GP to calculate genotype        
         imax = GP.idxmax(axis=1)
-        genotype.loc[snp, GP.index] = ALTALT
-        genotype.loc[snp, GP.index[imax == 0]] = REFREF
-        genotype.loc[snp, GP.index[imax == 1]] = REFALT
+        genotype.loc[GP.index[imax == 0], snp] = REF + REF
+        genotype.loc[GP.index[imax == 1], snp] = "".join(sorted(REF + ALT))
+        genotype.loc[GP.index[imax == 2], snp] = ALT + ALT
 
         # todo fix this
         #probability.loc[snp, GP.index] = GP.values
@@ -512,9 +510,11 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
             # todo this is quite slow and maybe incorrect
             print('SNP ' + snp + ' EA ' + EA + ' REF ' + REF +\
                   ' ALT ' + ALT + ' weight ' + str(weightSNP))
-            dosage = GP2dosage(GP, REF, ALT, EA)
-            print(str(dosage.shape))            
-            riskscore[GP.index] += weightSNP * dosage.values
+            dosage = GP2dosage(GP, REF, ALT, EA)                    
+            riskscore = riskscore.add(weightSNP * dosage, axis=1)
+
+    if profiler is not None:      
+        profiler.disable()
 
     if weights is None:
         return genotype, probability
