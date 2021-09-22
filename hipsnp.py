@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from datalad import api as datalad
 from alive_progress import alive_it
+from bgen_reader import open_bgen
 
 def ensembl_human_rsid(rsid):
     """
@@ -89,6 +90,7 @@ def rsid2chromosome(rsids, chromosomes=None):
     df['rsids'] = rsids
     return df
 
+
 def rsid2vcf(rsids, outdir,
         datalad_source="ria+http://ukb.ds.inm7.de#~genetic",
         qctool=None,
@@ -97,7 +99,8 @@ def rsid2vcf(rsids, outdir,
         datalad_dir=None,
         force=False,
         chromosomes=None,
-        chromosomes_use=None):
+        chromosomes_use=None,
+        outformat='vcf'):
     """
     get vcf files for a list of rsids
     rsids: list of rsids or a file with rsids, string or list of strings
@@ -111,6 +114,7 @@ def rsid2vcf(rsids, outdir,
     ch_rs: dataframe with columns 'rsids' and 'chromosomes', dataframe (default: None)
     returns: a pandas dataframe with rsid-chromosome pairs and the vcf files are created in the outdir
     """
+    assert isinstance(outformat, str) and outformat in ['vcf', 'bgen']
     # check if qctool is available
     if qctool is None:
         qctool = shutil.which('qctool')
@@ -141,9 +145,9 @@ def rsid2vcf(rsids, outdir,
         if chromosomes_use is not None and ch not in chromosomes_use:
             print ('skipping chromosome ' + str(ch), ' not in the use list')
             continue
-        file_vcf = os.path.join(outdir, 'chromosome' + str(ch) + '.vcf')
-        if force is False and os.path.isfile(file_vcf):
-            print('chromosome ' + str(ch) + ' output file exists, skipping: ' + str(file_vcf))
+        file_out = os.path.join(outdir, 'chromosome_' + str(ch) + '.' + outformat)
+        if force is False and os.path.isfile(file_out):
+            print('chromosome ' + str(ch) + ' output file exists, skipping: ' + str(file_out))
             continue
 
         ind = [i for i, x in enumerate(ch_rs['chromosomes']) if x == uchromosomes[c]]
@@ -185,7 +189,10 @@ def rsid2vcf(rsids, outdir,
         df.to_csv(file_rsids, index=False, header=False)
         
         cmd = qctool + ' -g ' + file_bgen + ' -s ' + file_sample \
-              + ' -incl-rsids ' + file_rsids  + ' -og ' + file_vcf
+              + ' -incl-rsids ' + file_rsids  + ' -og ' + file_out
+        if outformat == 'bgen':
+            cmd += ' -ofiletype bgen_v1.2 -bgen-bits 8'
+
         print('running qctool: ' + cmd  + '\n')
         os.system(cmd)
 
@@ -206,11 +213,13 @@ def rsid2vcf(rsids, outdir,
 
     return ch_rs, files, ds
 
+
 def rsid2vcf_multiple(rsid_files, outdir,
                       qctool=None,
                       datalad_source="ria+http://ukb.ds.inm7.de#~genetic",
                       datalad_dir=None,
-                      datalad_drop=True):
+                      datalad_drop=True,
+                      outformat='vcf'):
     """
 
     """
@@ -247,9 +256,70 @@ def rsid2vcf_multiple(rsid_files, outdir,
                 chromosomes=ch_rs[i]['chromosomes'].tolist(), \
                 datalad_source=datalad_source, datalad_dir=datalad_dir, qctool=qctool, \
                 chromosomes_use=[ch], force=False, datalad_drop=datalad_drop_i, \
-                datalad_drop_if_got=False)
+                datalad_drop_if_got=False, outformat=outformat)
 
     return outdirs
+
+
+def read_bgen(files, rsids_as_index=True, no_neg_samples=False, \
+            join='inner', verify_integrity=False, \
+            probs_in_pd=False, verbose=True):
+    if isinstance(files, str):
+        files = [files]
+
+    # make sure that files exist
+    for f in files:
+        assert os.path.isfile(f)
+
+    # read all the vcf_files
+    if verbose:
+        print('reading ' + str(len(files)) + ' bgen files... ')
+    probsdata = dict()
+    vcf = pd.DataFrame()
+    for f in alive_it(files):
+        if verbose:
+            print('reading ' + f)
+        bgen = open_bgen(f, verbose=False)
+        # sanity checks
+        # we can only deal with biallelic variants
+        nalleles = np.unique(bgen.nalleles)
+        assert len(nalleles) == 1 and nalleles[0] == 2
+        probs = bgen.read() # read the probabilities
+
+        tmp = pd.DataFrame(index=range(len(bgen.rsids)))
+        if rsids_as_index:
+            tmp.index = bgen.rsids
+
+        if probs_in_pd:
+            # this is extremely slow
+            print('putting probabilities in the dataframe')
+            for j in range(probs.shape[1]): #snps
+                for i in range(probs.shape[0]): # samples           
+                    tmp.iloc[j][i] = probs[i, j, :]
+        else:
+            nkey = len(probsdata.keys())
+            probsdata[str(nkey)] = dict()
+            probsdata[str(nkey)]['probs'] = np.array(probs)
+            probsdata[str(nkey)]['samples'] = np.array(bgen.samples)
+            probsdata[str(nkey)]['rsids'] = np.array(bgen.rsids)
+        
+        # add more data
+        # get REF and ALT
+        alleles = bgen.allele_ids
+        alleles = np.array([a.split(',') for a in alleles])
+        tmp = tmp.assign(REF=alleles[:, 0], ALT=alleles[:, 1])
+        tmp = tmp.assign(CHROM=bgen.chromosomes, POS=bgen.positions, ID=bgen.ids)
+        tmp['FORMAT'] = 'GP'
+
+        myjoin = join
+        if f == files[0]:
+            myjoin = 'outer'
+
+        vcf = pd.concat([vcf, tmp], join=myjoin, axis=0, verify_integrity=verify_integrity)
+        tmp = None
+
+    return vcf, probsdata
+
 
 def read_vcf(vcf_files, rsids_as_index=True, format=['GP', 'GT:GP'], \
             no_neg_samples=False, \
@@ -280,8 +350,9 @@ def read_vcf(vcf_files, rsids_as_index=True, format=['GP', 'GT:GP'], \
             lines = [l for l in f if not l.startswith('##')]
         
         tmp = pd.read_csv(io.StringIO(''.join(lines)), sep='\t', \
-              dtype={'#CHROM': str, 'POS': int, 'ID': str, 'REF': str, 'ALT': str,
-             'QUAL': str, 'FILTER': str, 'INFO': str})
+                dtype=str)
+              #dtype={'#CHROM': str, 'POS': int, 'ID': str, 'REF': str, 'ALT': str,
+              #'QUAL': str, 'FILTER': str, 'INFO': str})
         tmp.rename(columns={'#CHROM': 'CHROM'}, inplace=True)
 
         # check format
@@ -321,34 +392,48 @@ def read_vcf(vcf_files, rsids_as_index=True, format=['GP', 'GT:GP'], \
 
 
 def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
-    genotype_format='allele', verbose=True):
+                genotype_format='allele', probs=None, weights=None, \
+                verbose=True):
     """
     given a vcf file path or a pandas df from read_vcf returns genotypes and probabilities
     """
     assert isinstance(genotype_format, str)
     assert genotype_format in ['allele', '012']
 
-    if isinstance(vcf ,str):
-        assert os.path.isfile(vcf)
-        print('reading vcf file: ' + vcf)
-        vcf = read_vcf(vcf)
-    elif isinstance(vcf, pd.DataFrame):
-        pass
-    else:
+    if not isinstance(vcf, pd.DataFrame):
         print("don't know how to handle the input")
-        raise 
+        print('use other functions like read_vcf and read_bgen to get the required input')
+        raise
 
     nsnp = vcf.shape[0]
     ncol = vcf.shape[1]
     if samples is None:
-        samples = [vcf.columns[i] for i in range(9, ncol)]
+        if verbose:
+            print('no samples specified, using all')
+        if probs is None:
+            samples = [vcf.columns[i] for i in range(9, ncol)]
+        else:
+            pkeys = list(probs.keys())
+            samples = probs[pkeys[0]]['samples']
+            for pk in range(1, len(pkeys)):
+                samples = np.append(samples, probs[pkeys[pk]]['samples'])
+                samples = np.unique(samples)
     else:
-        assert all(sam in vcf.columns for sam in samples)
+        if probs is None:
+            assert all(sam in vcf.columns for sam in samples)
 
     if snps is None:
         snps = list(vcf.index)
     #else:
     #    assert all(snp in list(vcf.index) for snp in snps)
+
+    riskscore = None
+    if weights is not None:
+        if verbose:
+            print('using weights')
+        weights = read_weights(weights)
+        riskscore = pd.DataFrame(0, index=range(1), columns=range(len(samples)))
+        riskscore.columns = samples             
 
     genotype = pd.DataFrame(index=range(len(snps)), columns=range(len(samples)))
     genotype.index = snps
@@ -356,76 +441,91 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
     probability = genotype.copy()    
     print('calculating genotypes for ' + str(len(snps)) + ' SNPs and ' + \
           str(len(samples)) + ' samples ... ')
-    for snp in snps:
+    for snp in alive_it(snps):
+        # get SNP info
         try:
             REF = vcf['REF'][snp]
             ALT = vcf['ALT'][snp]
             assert len(REF) == 1 and len(ALT) == 1
+            if weights is not None:
+                EA  = weights['ea'][weights['rsid'] == snp].values
+                if len(EA) == 0:
+                    weightSNP = None
+                else:
+                    EA = EA[0]
+                    assert isinstance(EA, str) and len(EA) == 1
+                    weightSNP = weights['weight'][weights['rsid'] == snp].values[0]
+                    weightSNP = float(weightSNP)
         except Exception as e:
             if verbose:
-                    print('error parsing snp ' + str(snp))
-                    print(e)
+                print('error parsing snp ' + str(snp))
+                print(e)
             genotype.loc[snp, :] = np.nan
-            probability.loc[snp,:] = pd.Series([[np.nan]*3]*len(samples))
+            probability.loc[snp, :] = pd.Series([[np.nan]*3]*len(samples))
             continue
-        for sam in alive_it(samples):
-            GTGP = None            
-            try:
-                GTGP = vcf[sam][snp]
-                GT, GP = parse_GTGP(GTGP)
-                assert(not np.any(np.isnan(GP)))
-            except Exception as e:
-                if verbose:
-                    print('error parsing sample ' + str(sam) + \
-                      ' snp ' + str(snp))
-                    print(e)
-                genotype[sam][snp] = np.nan
-                probability[sam][snp] = [np.nan]*3
-                continue
-            assert len(GP) == 3            
-            GT = np.argmax(GP)            
-            if GP[GT] >= th: # homozygous ref
-                if GT == 0:
-                    gt = REF + REF
-                    gt012 = 0
-                elif GT == 1: # heterozygous
-                    gt = REF + ALT
-                    gt012 = 1
-                else: # homozygous alt
-                    gt = ALT + ALT
-                    gt012 = 2
-            if genotype_format == 'allele':
-                genotype[sam][snp] = "".join(sorted(gt))
-            elif genotype_format == '012':
-                genotype[sam][snp] = gt012
+        # get a df with probabilities for all the samples
+        GP = None
+        try:                
+            if probs is not None:                
+                for pk in probs.keys():                        
+                    if snp in probs[pk]['rsids']:
+                        snpidx = np.where(probs[pk]['rsids'] == snp)
+                        assert len(snpidx) == 1
+                        snpidx = snpidx[0][0]
+                        # probs is transposed samples x snps 
+                        GP = pd.DataFrame(probs[pk]['probs'][:, snpidx, :], \
+                            index=probs[pk]['samples'], columns=range(3))
+                        # keep what we need
+                        # todo check if this reorders
+                        GP = GP.reindex(samples).dropna()
+                        break
             else:
-                print('unknown genotype type')
-                raise
-            probability[sam][snp] = GP
-    return genotype, probability
+                # todo: vectorize this
+                GP = pd.DataFrame(index=samples, columns=range(3))
+                for sam in samples:
+                    try:
+                        gt, gp = parse_GTGP(vcf[sam][snp])
+                        GP[sam] = gp
+                    except Exception as e:
+                        if verbose:
+                            print('error parsing snp ' + str(snp))
+                            print(e)
+                        genotype[sam][snp] = np.nan
+                        probability[sam][snp] = [np.nan]*3
+                        continue
+        except Exception as e:
+            print(e)
 
+        # use GP to calculate genotype
+        REFREF = REF + REF
+        REFALT = "".join(sorted(REF + ALT))
+        ALTALT = ALT + ALT
+        imax = GP.idxmax(axis=1)
+        genotype.loc[snp, GP.index] = ALTALT
+        genotype.loc[snp, GP.index[imax == 0]] = REFREF
+        genotype.loc[snp, GP.index[imax == 1]] = REFALT
 
-def vcf2prs(vcf, weights, samples=None, outfile=None, \
-        all_rsids=False, no_neg_samples=False, allow_missing_rsid=False,\
-        verify_integrity=False, vcf_join='inner'):
-    """
-    given a list of vcf files and a file with weights, returns a pandas df with
-    the polygenic risk scores for each sample
-    vcf_files: list of vcf files or a directory with vcf files, str or list of str
-    weights: file with weights (must contain header and columns snpid/rsid, ea and weight), str
-    samples: list of samples to use, list of str (default: None, which means all samples)    
-    outfile: file to write the output, str (default: None, which means no file written)
-    returns: polygenic risk score for each sample, pandas df
-    """
-    if isinstance(vcf, str) and os.path.isdir(vcf):
-        vcf_files = vcf
-        vcf_files = glob.glob(vcf_files + '/*.vcf')
-        assert isinstance(vcf_files, list)
-        assert len(vcf_files) > 0
+        # todo fix this
+        #probability.loc[snp, GP.index] = GP.values
+
+        if weights is not None and weightSNP is not None:
+            # todo this is quite slow and maybe incorrect
+            print('SNP ' + snp + ' EA ' + EA + ' REF ' + REF +\
+                  ' ALT ' + ALT + ' weight ' + str(weightSNP))
+            dosage = GP2dosage(GP, REF, ALT, EA)
+            print(str(dosage.shape))
+            return dosage, riskscore, GP, weightSNP            
+
+    if weights is None:
+        return genotype, probability
     else:
-        assert isinstance(vcf, pd.DataFrame)
-        vcf_files = None
+        return genotype, riskscore
 
+
+def read_weights(weights):
+    """
+    read weights from a file
+    """
     if isinstance(weights, str):
         assert os.path.isfile(weights)
         weights = pd.read_csv(weights, sep='\t', comment='#')
@@ -435,10 +535,40 @@ def vcf2prs(vcf, weights, samples=None, outfile=None, \
 
     assert 'ea' in weights.columns
     assert 'weight' in weights.columns
-    assert 'rsid' in weights.columns
-    rsidcol = 'rsid'    
-    rsids_weights = weights[rsidcol].tolist()
-    assert len(rsids_weights) == len(set(rsids_weights))     
+    assert 'rsid' in weights.columns    
+    rsids = weights['rsid'].tolist()
+    # make sure that all rsids are unique
+    assert len(rsids) == len(set(rsids))
+    return weights
+
+
+def vcf2prs(vcf, weights, samples=None, outfile=None, \
+        all_rsids=False, no_neg_samples=False, allow_missing_rsid=False,\
+        probs=None, verify_integrity=False, vcf_join='inner', \
+        covars=None):
+    """
+    given a list of vcf files and a file with weights, returns a pandas df with
+    the polygenic risk scores for each sample
+    vcf_files: list of vcf files or a directory with vcf files, str or list of str
+    weights: file with weights (must contain header and columns snpid/rsid, ea and weight), str \
+             (this can be .txt file downloaded from PGS Catalog)
+    samples: list of samples to use, list of str (default: None, which means all samples)    
+    outfile: file to write the output, str (default: None, which means no file written)
+    returns: polygenic risk score for each sample, pandas df
+    """
+    # todo
+    # deal with covars, e.g. age and sex
+
+    if isinstance(vcf, str) and os.path.isdir(vcf):
+        vcf_files = vcf
+        vcf_files = glob.glob(vcf_files + '/*.vcf')
+        assert isinstance(vcf_files, list)
+        assert len(vcf_files) > 0
+    else:
+        assert isinstance(vcf, pd.DataFrame)
+        vcf_files = None
+
+    weights = read_weights(weights)     
     print('weight file contains ' + str(len(rsids_weights)) + ' rsids')
     
     # read all the vcf_files
@@ -464,7 +594,7 @@ def vcf2prs(vcf, weights, samples=None, outfile=None, \
         assert np.all([sam in vcf.columns for sam in samples])
     
     print('calculating PRS for ' + str(len(samples)) + ' samples ... ')
-    genotype, probability = vcf2genotype(vcf, samples=samples, snps=rsids_weights)
+    genotype, probability = vcf2genotype(vcf, samples=samples, snps=rsids_weights, probs=probs)
 
     PRS = pd.DataFrame(0, index=range(1), columns=range(len(samples)))
     PRS.columns = samples
@@ -479,16 +609,7 @@ def vcf2prs(vcf, weights, samples=None, outfile=None, \
         for sam in alive_it(samples):
             try:
                 GP = probability[sam][snp]
-                assert len(GP) == 3
-                pHomoREF, pHeteroz, pHomoALT = GP[0], GP[1], GP[2]            
-                if EA == REF:
-                    dosage = pHeteroz + 2*pHomoREF
-                elif EA == ALT:
-                    dosage = pHeteroz + 2*pHomoALT
-                else:
-                    print('SNP ' + snp + ' ALT ' + ALT + ' or REF ' + REF + \
-                      ' do not match EA ' + EA)
-                    raise
+                dosage = GP2dosage(GP, REF, ALT, EA)
                 PRS[sam] += dosage*weightSNP
             except Exception as e:
                 print('error calculating PRS for sample ' + str(sam) + \
@@ -508,27 +629,44 @@ def vcf2prs(vcf, weights, samples=None, outfile=None, \
             print('outfile argument is not a string, no file written')
 
     return PRS
-    
+
+
+def GP2dosage(GP, REF, ALT, EA):
+    assert GP.shape[1] == 3  
+    if EA == REF:
+        dosage = GP.iloc[:,1] + 2*GP.iloc[:,0]
+    elif EA == ALT:
+        dosage = GP.iloc[:,1] + 2*GP.iloc[:,2]
+    else:
+        print('SNP ' + snp + ' ALT ' + ALT + ' or REF ' + REF + \
+              'do not match EA ' + EA)
+        raise
+    return dosage
+
+
 def parse_GTGP(GTGP, format=None):
     """
     given a GT:GP string, returns GT and an array of three GP
     """
-    assert isinstance(GTGP, str)
+    assert isinstance(GTGP, str) or isinstance(GTGP, list) or isinstance(GTGP, np.ndarray)
     GT = None
-    if format is None:
-        format = ':' in GTGP
-    if format:
-        GTGP = GTGP.split(':')
-        assert len(GTGP) == 2
-        GT = GTGP[0]
-        GP = GTGP[1]
-    else:
+    if isinstance(GTGP, list) or isinstance(GTGP, np.ndarray):
         GP = GTGP
+    else:
+        if format is None:
+            format = ':' in GTGP
+        if format:
+            GTGP = GTGP.split(':')
+            assert len(GTGP) == 2
+            GT = GTGP[0]
+            GP = GTGP[1]
+        else:
+            GP = GTGP
 
-    try:
-        GP = [float(gp) for gp in GP.split(',')]
-        assert len(GP) == 3
-    except:
-        GP = [np.nan, np.nan, np.nan]        
+        try:
+            GP = [float(gp) for gp in GP.split(',')]
+            assert len(GP) == 3
+        except:
+            GP = [np.nan, np.nan, np.nan]
     GP = np.array(GP)
     return GT, GP
