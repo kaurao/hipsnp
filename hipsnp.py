@@ -391,6 +391,7 @@ def read_vcf(vcf_files, rsids_as_index=True, format=['GP', 'GT:GP'], \
     return vcf
 
 
+@profile
 def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
                 genotype_format='allele', probs=None, weights=None, \
                 verbose=True, profiler=None):
@@ -441,7 +442,7 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
     probability = genotype.copy()
     print('calculating genotypes for ' + str(len(snps)) + ' SNPs and ' + \
           str(len(samples)) + ' samples ... ')
-    for snp in alive_it(snps[0:1]):
+    for snp in alive_it(snps):
         # get SNP info
         try:
             REF = vcf['REF'][snp]
@@ -472,10 +473,18 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
                         snpidx = np.where(probs[pk]['rsids'] == snp)
                         assert len(snpidx) == 1
                         snpidx = snpidx[0][0]
-                        # probs is transposed samples x snps 
-                        GP = pd.DataFrame(probs[pk]['probs'][:, snpidx, :], \
-                            index=probs[pk]['samples'], columns=range(3))                        
-                        break
+
+                        index = probs[pk]['samples']  # samples in probs
+                        idx_mask = np.in1d(index, samples)
+                        probs_pk = probs[pk]['probs'][:, snpidx, :]
+                        probs_pk = probs_pk[idx_mask]                        
+                        # probs is samples x snps x 3
+                        GP = pd.DataFrame(probs_pk, index=index[idx_mask],
+                                          columns=range(3))
+                        # keep what we need
+                        # todo check if this reorders
+                        #GP = GP.reindex(samples).dropna()
+                        #break
             else:
                 # todo: vectorize this
                 GP = pd.DataFrame(index=samples, columns=range(3))
@@ -492,13 +501,9 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
                         continue
         except Exception as e:
             print(e)
-
-        # keep what we need
-        # todo check if this reorders
-        GP = GP.reindex(samples).dropna()
         
         # use GP to calculate genotype        
-        imax = GP.idxmax(axis=1)
+        imax = np.argmax(GP.values, axis=1)
         genotype.loc[GP.index[imax == 0], snp] = REF + REF
         genotype.loc[GP.index[imax == 1], snp] = "".join(sorted(REF + ALT))
         genotype.loc[GP.index[imax == 2], snp] = ALT + ALT
@@ -510,8 +515,10 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
             # todo this is quite slow and maybe incorrect
             print('SNP ' + snp + ' EA ' + EA + ' REF ' + REF +\
                   ' ALT ' + ALT + ' weight ' + str(weightSNP))
-            dosage = GP2dosage(GP, REF, ALT, EA)                    
-            riskscore = riskscore.add(weightSNP * dosage, axis=1)
+            dosage = GP2dosage(GP, REF, ALT, EA)            
+            # whichever samples have a non-nan dosage get added
+            # all others become NaN which ius good        
+            riskscore = riskscore.add(weightSNP * dosage, axis=0)
 
     if profiler is not None:      
         profiler.disable()
