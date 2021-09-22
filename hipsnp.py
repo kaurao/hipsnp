@@ -513,8 +513,8 @@ def vcf2genotype(vcf, th=0.9, snps=None, samples=None, \
             print('SNP ' + snp + ' EA ' + EA + ' REF ' + REF +\
                   ' ALT ' + ALT + ' weight ' + str(weightSNP))
             dosage = GP2dosage(GP, REF, ALT, EA)
-            print(str(dosage.shape))
-            return dosage, riskscore, GP, weightSNP            
+            print(str(dosage.shape))            
+            riskscore[GP.index] += weightSNP * dosage.values
 
     if weights is None:
         return genotype, probability
