@@ -210,9 +210,9 @@ def pruned_bgen_from_Datalad(
     files = None
     ds = None
     logger.info(f'Chromosomes needed: {uchromosomes}')
-    for c, ch in enumerate(uchromosomes):
+    for ch in uchromosomes:
 
-        file_out = Path(outdir, 'chromosome' + str(ch) + 'bgen')
+        file_out = Path(outdir, 'chromosome' + str(ch) + '.bgen')
 
         if recompute is False and file_out.is_file():
             warn(f'chromosome {ch} output file exists. It will not be \
@@ -239,7 +239,7 @@ def pruned_bgen_from_Datalad(
             if status != 'ok' and status != 'notneeded':
                 ds.remove(dataset=data_dir)
                 raise_error(f'datalad: error getting file {f_ix}: \
-                              {getout_val["path"]} \n')                    
+                              {getout_val["path"]} \n')
             else:
                 logger.info(f'datalad: status {status} file {files[f_ix]}')
 
@@ -259,7 +259,8 @@ def pruned_bgen_from_Datalad(
         df = pd.DataFrame(rs_ch)
         df.to_csv(file_rsids, index=False, header=False)
 
-        cmd = (qctool + ' -g ' + str(file_bgen) + ' -s ' + str(file_sample)
+        cmd = (qctool + ' -g ' + str(file_bgen[0])
+               + ' -s ' + str(file_sample[0])
                + ' -incl-rsids ' + str(file_rsids)  + ' -og ' + str(file_out)
                + ' -ofiletype bgen_v1.2 -bgen-bits 8')
         # from a .bgen and a .samples file, make a .bgen file with rsids

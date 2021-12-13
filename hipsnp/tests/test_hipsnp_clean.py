@@ -566,6 +566,38 @@ def test_pruned_bgen_from_Datalad_no_qstool():
         hps.pruned_bgen_from_Datalad(rsids='rs101', outdir='', qctool=qctool)
 
 
+def test_pruned_bgen_from_Datalad_wrong_rsdis_chromosome_size():
+    qctool = '/home/oportoles/Apps/qctool_v2.0.6-Ubuntu16.04-x86_64/qctool'
+    rsids = ['RSID_2', 'RSID_3', 'RSID_5', 'RSID_6', 'RSID_7']
+    chromosomes = ['1']
+    with pytest.raises(ValueError):
+        hps.pruned_bgen_from_Datalad(rsids=rsids,
+                                     chromosomes=chromosomes,
+                                     outdir='',
+                                     qctool=qctool)
+
+
+def test_pruned_bgen_from_Datalad_give_rsdis_chromosome():
+    source = 'git@gin.g-node.org:/juaml/datalad-example-bgen'
+    qctool = '/home/oportoles/Apps/qctool_v2.0.6-Ubuntu16.04-x86_64/qctool'
+    rsids = ['RSID_2', 'RSID_3', 'RSID_5', 'RSID_6', 'RSID_7']
+    chromosomes = ['1'] * len(rsids)
+    with tempfile.TemporaryDirectory() as tempdir:
+
+        ch_rs, files, dataL = hps.pruned_bgen_from_Datalad(
+            rsids,
+            outdir=tempdir,
+            datalad_source=source,
+            qctool=qctool,
+            datalad_drop=True,
+            datalad_drop_if_got=True,
+            data_dir=tempdir,
+            recompute=False,
+            chromosomes=chromosomes)
+    assert sorted(ch_rs['rsids']) == sorted(rsids)
+    assert len(files) == 2
+
+
 def test_pruned_bgen_from_Datalad_as_before_Genotype():
     """ finds and uses qctool"""
     source = 'git@gin.g-node.org:/juaml/datalad-example-bgen'
@@ -593,6 +625,10 @@ def test_pruned_bgen_from_Datalad_as_before_Genotype():
         assert validatePANDAScolumns(ch_rs, ['rsids', 'chromosomes'])
         assert sorted([Path(f) for f in filesRef]) == sorted(files)
         assert type(dataL) == dl.Dataset
+        assert not(any(Path(f).is_file() for f in files))
+        new_bgen_file = tempdir + '/chromosome' + chromosomes[0] + '.bgen'
+        assert Path(new_bgen_file).is_file()
+
 
 
 def _filesHaveName(dataLget):
