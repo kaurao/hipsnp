@@ -14,7 +14,13 @@ pandas>=1.1.2
 numpy>=1.21.2
 bgen_reader>=4.0.8
 
+and the tool qctool v2 installed (see https://www.well.ox.ac.uk/~gav/qctool/). 
+We recomend to add the qctool to the list of environmental varables, but it is
+not a requirement.
+
 Running the examples requires:
+
+matplotlib
 
 Depending on the installation method, this packages might be installed
 automatically.
@@ -58,6 +64,13 @@ Latest Development Version
 --------------------------
 First, make sure that you have all the dependencies installed:
 
+.. code-block:: bash
+    pip install -U bgen_reader numpy pandas datalad
+
+and the tool qctool v2 installed (see https://www.well.ox.ac.uk/~gav/qctool/). 
+We recomend to add the qctool to the list of environmental varables, but it is
+not a requirement.
+
 Then, install hipsnp from TestPypi
 
 .. code-block:: bash
@@ -71,11 +84,18 @@ Local git repository (for developers)
 -------------------------------------
 First, make sure that you have all the dependencies installed:
 
+.. code-block:: bash
+    pip install -U bgen_reader numpy pandas datalad
+
+and the tool qctool v2 installed (see https://www.well.ox.ac.uk/~gav/qctool/). 
+We recomend to add the qctool to the list of environmental varables, but it is
+not a requirement.
+
 Then, clone `hipsnp Github`_ repository in a folder of your choice:
 
 .. code-block:: bash
 
-    git clone http://oportoles.github.io/hipsnp/.git
+    git clone https://github.com/juaml/hipsnp.git
 
 Install development mode requirements:
 
