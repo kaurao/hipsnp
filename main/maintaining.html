@@ -131,7 +131,7 @@ git tag vX.Y.Z
 <ol class="arabic simple" start="7">
 <li><p>Check that the build system is creating the proper version</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SETUPTOOLS_SCM_DEBUG</span><span class="o">=</span><span class="m">1</span> python -m pep517.build --source --binary --out-dir dist/ .
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SETUPTOOLS_SCM_DEBUG</span><span class="o">=</span><span class="m">1</span> python -m build .
 </pre></div>
 </div>
 <ol class="arabic simple" start="8">
