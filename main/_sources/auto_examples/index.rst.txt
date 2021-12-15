@@ -16,10 +16,10 @@ The following are a set of examples.
 
 .. only:: html
 
- .. figure:: /auto_examples/images/thumb/sphx_glr_example_mock_data_thumb.png
+ .. figure:: /auto_examples/images/thumb/sphx_glr_plot_example_mock_data_thumb.png
      :alt: Obtain risk scores and alleles
 
-     :ref:`sphx_glr_auto_examples_example_mock_data.py`
+     :ref:`sphx_glr_auto_examples_plot_example_mock_data.py`
 
 .. raw:: html
 
@@ -29,7 +29,7 @@ The following are a set of examples.
 .. toctree::
    :hidden:
 
-   /auto_examples/example_mock_data
+   /auto_examples/plot_example_mock_data
 .. raw:: html
 
     <div class="sphx-glr-clear"></div>
