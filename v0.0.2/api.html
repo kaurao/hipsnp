@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reference &mdash; hipsnp  documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery-binder.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery-dataframe.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery-rendered-html.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Maintaining" href="maintaining.html" />
+    <link rel="prev" title="Obtain risk scores and alleles" href="auto_examples/plot_example_mock_data.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> hipsnp
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="auto_examples/index.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#classes">Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#reading-data">Reading data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#logging">Logging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="maintaining.html">Maintaining</a></li>
+<li class="toctree-l1"><a class="reference internal" href="whats_new.html">What’s new</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">hipsnp</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="reference">
+<h1>Reference<a class="headerlink" href="#reference" title="Permalink to this headline"></a></h1>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">hipsnp.hipsnp.</span></span><span class="sig-name descname"><span class="pre">Genotype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metadata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probabilities</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.Genotype" title="Permalink to this definition"></a></dt>
+<dd><p>Genotype class. Models a genotype including the list of chromosomes,
+positions, and the probabilities of each allele in each sample.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>_metadata: pd.DataFrame</strong></dt><dd><p>Metadata of the genotype. The dataframe should contain the
+columns RSIDS (as index), CHROM, POS, ID and FORMAT.
+Each RSID should be unique and map one-to-one to a chromosome.</p>
+</dd>
+<dt><strong>_probabilities: dict(str</strong><span class="classifier">tuple(np.array of size (n_samples), np.array of size (n_samples, 3))))</span></dt><dd><p>Probabilities of each allele in each sample, for each chromosome.
+Each value is a tuple with the samples and a 2D numpy array with
+the probabilities of each allele in each sample
+(REF-REF, ALT-REF, and ALT-ALT).</p>
+</dd>
+<dt><strong>_consolidated: bool</strong></dt><dd><p>If consolidated, the object contains data in which all RSIDs have the
+same samples and in the same order.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Genotype constructor</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>metadata: pd.DataFrame</strong></dt><dd><p>Metadata of the genotype. The dataframe should contain the
+columns RSIDS (as index), CHROM, POS, ID and FORMAT.
+Each RSID should be unique and map one-to-one to a chromosome.</p>
+</dd>
+<dt><strong>probabilities: dict(str</strong><span class="classifier">tuple(str, np.array of size (n_samples, 3))))</span></dt><dd><p>Probabilities of each allele in each sample, for each chromosome.
+Each value is a tuple with the samples and a 2D numpy array with
+the probabilities of each allele in each sample
+(REF-REF, ALT-REF, and ALT-ALT).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype.alleles">
+<span class="sig-name descname"><span class="pre">alleles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rsids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.Genotype.alleles" title="Permalink to this definition"></a></dt>
+<dd><p>Get the alleles for this genotype object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>rsids</strong><span class="classifier">list of str, optional</span></dt><dd><p>rsids to be used, by default None</p>
+</dd>
+<dt><strong>samples</strong><span class="classifier">list of str, optional</span></dt><dd><p>Samples to be used, by default None</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>alleles: pandas DataFrame</dt><dd><p>Most probable alleles of each rsid and sample.</p>
+</dd>
+<dt><strong>alleles_idx</strong><span class="classifier">pandas DataFrame</span></dt><dd><p>Indexes of the most probable allele 0=REFREF, 1=ALTREF, 2=ALTALT</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype.consolidate">
+<span class="sig-name descname"><span class="pre">consolidate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.Genotype.consolidate" title="Permalink to this definition"></a></dt>
+<dd><p>Align samples consistently across all RSIDs. If a sample is not
+found in all RSID, the sample is discarded.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>inplace: bool</strong></dt><dd><p>If true, modifies the object in place (default). If false, returns
+a new object without modifying the original one.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Genotype</dt><dd><p>The consolidated genotype object.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If there are no common samples across RSIDs</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rsids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.Genotype.filter" title="Permalink to this definition"></a></dt>
+<dd><p>Filter the genotype by rsids and samples. Alternatively, a weights
+definition (csv or DataFrame) can be provided. The rsids will then be
+extracted from this file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>rsids</strong><span class="classifier">str or list of str | None</span></dt><dd><p>RSIDs to keep. If None, does not filter (default).</p>
+</dd>
+<dt><strong>samples</strong><span class="classifier">str or list of str | None</span></dt><dd><p>Samples to keep. If None, does not filter (default).</p>
+</dd>
+<dt><strong>weights</strong><span class="classifier">str, Path or DataFrame | None</span></dt><dd><p>Path to a CSV or PSG file with the weights,
+or pandas DataFrame with weights as provided by <cite>read_weights</cite></p>
+</dd>
+<dt><strong>inplace: bool</strong></dt><dd><p>If true, modifies the object in place (default). If False, returns
+a new object without modifying the original one.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Genotype:</dt><dd><p>The filtered genotype object.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If the filtered data is empty.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype.is_consolidated">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_consolidated</span></span><a class="headerlink" href="#hipsnp.hipsnp.Genotype.is_consolidated" title="Permalink to this definition"></a></dt>
+<dd><p>If consolidated, the object contains data in which all RSIDs have
+the same samples and in the same order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>bool</dt><dd><p>True if the genotype is consolidated, False if otherwise.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype.metadata">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">metadata</span></span><a class="headerlink" href="#hipsnp.hipsnp.Genotype.metadata" title="Permalink to this definition"></a></dt>
+<dd><p>Metadata of the genotype, including the columns RSIDS (as index),
+CHROM, POS, ID and FORMAT.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>the Metadata of the genotype.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype.probabilities">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">probabilities</span></span><a class="headerlink" href="#hipsnp.hipsnp.Genotype.probabilities" title="Permalink to this definition"></a></dt>
+<dd><p>Probability of each allele combination foir each sample of an rsids</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>dict(str</strong><span class="classifier">tuple(str, np.array of size (n_samples, 3))))</span></dt><dd><p>The three probalities associated to the allele combinations
+REF-REF, ALT-REF, and ALT-ALT for each sample of each rsids.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype.riskscores">
+<span class="sig-name descname"><span class="pre">riskscores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rsids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.Genotype.riskscores" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the risk score and dosage for this genotype object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>weights</strong><span class="classifier">str or pd.DataFrame,</span></dt><dd><p>Path to CSV or PGS file with weights.</p>
+</dd>
+<dt><strong>rsids</strong><span class="classifier">list of str | None</span></dt><dd><p>RSIDs to be used. If None (default), all RSIDs are used.</p>
+</dd>
+<dt><strong>samples</strong><span class="classifier">list of str | None</span></dt><dd><p>Samples to be used. If None (default), all samples are used.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>dosage</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>Dataframe with the dosage by rsid and samples</p>
+</dd>
+<dt><strong>riskscores</strong><span class="classifier">pd.DataFrame</span></dt><dd><p>DataFrame with riskscores by samples</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.Genotype.rsids">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">rsids</span></span><a class="headerlink" href="#hipsnp.hipsnp.Genotype.rsids" title="Permalink to this definition"></a></dt>
+<dd><p>RSIDs present in the genotype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>list(str)</dt><dd><p>The rsids present in the genotype.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="reading-data">
+<h2>Reading data<a class="headerlink" href="#reading-data" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.read_bgen">
+<span class="sig-prename descclassname"><span class="pre">hipsnp.hipsnp.</span></span><span class="sig-name descname"><span class="pre">read_bgen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verify_integrity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.read_bgen" title="Permalink to this definition"></a></dt>
+<dd><p>Read bgen files into a single Genotype object</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>files</strong><span class="classifier">str or list(str)</span></dt><dd><p>Files to be read</p>
+</dd>
+<dt><strong>verify_integrity</strong><span class="classifier">bool</span></dt><dd><p>If True, verify that there RSIDs are not repeated.
+Defaults to False due to performance reasons.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>genotype</strong><span class="classifier">Genotype</span></dt><dd><p>The genotype object as read from the files.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.genotype_from_datalad">
+<span class="sig-prename descclassname"><span class="pre">hipsnp.hipsnp.</span></span><span class="sig-name descname"><span class="pre">genotype_from_datalad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rsids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">workdir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datadir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chromosomes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datalad_source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ria+http://ukb.ds.inm7.de#~genetic'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">datalad_drop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'get'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.genotype_from_datalad" title="Permalink to this definition"></a></dt>
+<dd><p>Reads a genotype from a datalad Dataset.
+A .bgen file with the selected RSIDs and chromosemes is created with
+qctool v2 (see notes) on the working directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>rsids</strong><span class="classifier">str or list of str</span></dt><dd><p>list of RSIDs to be included in the genotype</p>
+</dd>
+<dt><strong>workdir</strong><span class="classifier">str</span></dt><dd><p>Path to save bgen and CSV files.</p>
+</dd>
+<dt><strong>datadir</strong><span class="classifier">str, optional</span></dt><dd><p>Path to the datalad dataset or directory with the chromosome files.</p>
+</dd>
+<dt><strong>chromosomes</strong><span class="classifier">list of str | None</span></dt><dd><p>Chromosomes to process. If None (default), use all chromosomes and get
+that information from ensmebl.org (requires internet connection)
+There should be one chromosome of each rsid provided.</p>
+</dd>
+<dt><strong>datalad_source</strong><span class="classifier">str, optional</span></dt><dd><p>datalad data source, by default “ria+http://ukb.ds.inm7.de#~genetic”</p>
+</dd>
+<dt><strong>qctool</strong><span class="classifier">str, optional</span></dt><dd><p>path to qctool, by default None</p>
+</dd>
+<dt><strong>datalad_drop</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, each chromosome file will be removed after the genotype is
+read. If False, the dataset will be kept. If ‘get’ (default), only the
+the files got during the process will be removed.</p>
+</dd>
+<dt><strong>recompute</strong><span class="classifier">bool, optional</span></dt><dd><p>whether to recompute re-calculation (based on output file presence),
+by default False</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>Genotype</dt><dd><p>The genotype</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>qctool must be installed (see <a class="reference external" href="https://www.well.ox.ac.uk/~gav/qctool/">https://www.well.ox.ac.uk/~gav/qctool/</a>)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.read_weights">
+<span class="sig-prename descclassname"><span class="pre">hipsnp.hipsnp.</span></span><span class="sig-name descname"><span class="pre">read_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\t'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.read_weights" title="Permalink to this definition"></a></dt>
+<dd><p>Read weights from a CSV/TSV or PGS file (see
+<a class="reference external" href="https://www.pgscatalog.org/downloads/#dl_ftp_scoring">https://www.pgscatalog.org/downloads/#dl_ftp_scoring</a>).</p>
+<dl class="simple">
+<dt>Table headers must contain:</dt><dd><ul class="simple">
+<li><p><cite>effect_allele</cite> or <cite>ea</cite></p></li>
+<li><p><cite>effect_weight</cite> or <cite>weight</cite></p></li>
+<li><p><cite>snpid</cite> or <cite>rsid</cite></p></li>
+<li><p><cite>chr_name</cite> or <cite>chr</cite></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>fname</strong><span class="classifier">str</span></dt><dd><p>Path to the CSV/TSV or PGS file with the weights.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>pd.DataFrame</dt><dd><p>weights by RSID</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If the file does not exist or the CSV does not contain required
+fields.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipsnp.hipsnp.get_chromosomes_from_ensembl">
+<span class="sig-prename descclassname"><span class="pre">hipsnp.hipsnp.</span></span><span class="sig-name descname"><span class="pre">get_chromosomes_from_ensembl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rsids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_retries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.hipsnp.get_chromosomes_from_ensembl" title="Permalink to this definition"></a></dt>
+<dd><p>Make a REST call to ensembl.org and return a JSON object with
+the information of the variant of given a rsid</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>rsid</strong><span class="classifier">str or list of str</span></dt><dd><p>RSID(s) to be queried. Must start with “rs”</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>list of str</dt><dd><p>The chromosome(s) of the given rsid(s)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If the RSIDs provided are not valid</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<hr class="docutils" />
+<section id="logging">
+<h2>Logging<a class="headerlink" href="#logging" title="Permalink to this headline"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="hipsnp.utils.configure_logging">
+<span class="sig-prename descclassname"><span class="pre">hipsnp.utils.</span></span><span class="sig-name descname"><span class="pre">configure_logging</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'WARNING'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.utils.configure_logging" title="Permalink to this definition"></a></dt>
+<dd><p>Configure the logging functionality</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>level</strong><span class="classifier">int or string</span></dt><dd><p>The level of the messages to print. If string, it will be interpreted
+as elements of logging.
+Options are: [‘DEBUG’, ‘INFO’, ‘WARNING’, ‘ERROR’]. Defaults to
+‘WARNING’.</p>
+</dd>
+<dt><strong>fname</strong><span class="classifier">str, Path or None</span></dt><dd><p>Filename of the log to print to. If None, stdout is used.</p>
+</dd>
+<dt><strong>overwrite</strong><span class="classifier">bool | None</span></dt><dd><p>Overwrite the log file (if it exists). Otherwise, statements
+will be appended to the log (default). None is the same as False,
+but additionally raises a warning to notify the user that log
+entries will be appended.</p>
+</dd>
+<dt><strong>output_format</strong><span class="classifier">str</span></dt><dd><p>Format of the output messages. See the documentation of
+<a class="reference external" href="https://docs.python.org/dev/howto/logging.html">https://docs.python.org/dev/howto/logging.html</a>
+e.g., “%(asctime)s - %(levelname)s - %(message)s”.
+Defaults to “%(asctime)s - %(name)s - %(levelname)s - %(message)s”</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipsnp.utils.warn">
+<span class="sig-prename descclassname"><span class="pre">hipsnp.utils.</span></span><span class="sig-name descname"><span class="pre">warn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">category=&lt;class</span> <span class="pre">'RuntimeWarning'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.utils.warn" title="Permalink to this definition"></a></dt>
+<dd><p>Warn, but first log it</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>msg</strong><span class="classifier">str</span></dt><dd><p>Warning message</p>
+</dd>
+<dt><strong>category</strong><span class="classifier">instance of Warning</span></dt><dd><p>The warning class. Defaults to <code class="docutils literal notranslate"><span class="pre">RuntimeWarning</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="hipsnp.utils.raise_error">
+<span class="sig-prename descclassname"><span class="pre">hipsnp.utils.</span></span><span class="sig-name descname"><span class="pre">raise_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">klass=&lt;class</span> <span class="pre">'ValueError'&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#hipsnp.utils.raise_error" title="Permalink to this definition"></a></dt>
+<dd><p>Raise an error, but first log it</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>msg</strong><span class="classifier">str</span></dt><dd><p>Error message</p>
+</dd>
+<dt><strong>klass</strong><span class="classifier">class of the error to raise. Defaults to ValueError</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="auto_examples/plot_example_mock_data.html" class="btn btn-neutral float-left" title="Obtain risk scores and alleles" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="maintaining.html" class="btn btn-neutral float-right" title="Maintaining" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Authors of hipsnp.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.0.2
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../v0.0.1/index.html">v0.0.1</a></dd>
+      <dd><a href="api.html">v0.0.2</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
