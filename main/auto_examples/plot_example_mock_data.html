@@ -103,13 +103,13 @@ The alleles are extracted from the BGEN files and a risk score is calculated</p>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2021-12-17 09:40:03,904 - HIPSNP - INFO - ===== Lib Versions =====
-2021-12-17 09:40:03,904 - HIPSNP - INFO - numpy: 1.21.4
-2021-12-17 09:40:03,904 - HIPSNP - INFO - scipy: 1.7.3
-2021-12-17 09:40:03,904 - HIPSNP - INFO - bgen_reader: 4.0.8
-2021-12-17 09:40:03,904 - HIPSNP - INFO - datalad: 0.15.4
-2021-12-17 09:40:03,904 - HIPSNP - INFO - pandas: 1.3.5
-2021-12-17 09:40:03,905 - HIPSNP - INFO - ========================
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2021-12-17 09:40:10,826 - HIPSNP - INFO - ===== Lib Versions =====
+2021-12-17 09:40:10,826 - HIPSNP - INFO - numpy: 1.21.4
+2021-12-17 09:40:10,826 - HIPSNP - INFO - scipy: 1.7.3
+2021-12-17 09:40:10,826 - HIPSNP - INFO - bgen_reader: 4.0.8
+2021-12-17 09:40:10,826 - HIPSNP - INFO - datalad: 0.15.4
+2021-12-17 09:40:10,826 - HIPSNP - INFO - pandas: 1.3.5
+2021-12-17 09:40:10,826 - HIPSNP - INFO - ========================
 </pre></div>
 </div>
 <p>Get a temporary directory to work. Use another directory if you want to
@@ -126,21 +126,21 @@ as work and data directory.</p>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2021-12-17 09:40:04,025 - HIPSNP - INFO - Chromosomes needed: [&#39;1&#39;]
-2021-12-17 09:40:04,026 - HIPSNP - INFO - Getting chromosome 1 for RSID(s) [&#39;RSID_1&#39; &#39;RSID_2&#39; &#39;RSID_3&#39;]
-[INFO] Cloning dataset to Dataset(/tmp/tmpvogvb80o)
-[INFO] Attempting to clone from https://gin.g-node.org/juaml/datalad-example-bgen to /tmp/tmpvogvb80o
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2021-12-17 09:40:11,050 - HIPSNP - INFO - Chromosomes needed: [&#39;1&#39;]
+2021-12-17 09:40:11,051 - HIPSNP - INFO - Getting chromosome 1 for RSID(s) [&#39;RSID_1&#39; &#39;RSID_2&#39; &#39;RSID_3&#39;]
+[INFO] Cloning dataset to Dataset(/tmp/tmpfsa73rbn)
+[INFO] Attempting to clone from https://gin.g-node.org/juaml/datalad-example-bgen to /tmp/tmpfsa73rbn
 [INFO] Start enumerating objects
 [INFO] Start counting objects
 [INFO] Start compressing objects
-[INFO] Completed clone attempts for Dataset(/tmp/tmpvogvb80o)
+[INFO] Completed clone attempts for Dataset(/tmp/tmpfsa73rbn)
 [INFO] access to 1 dataset sibling github-lfs not auto-enabled, enable with:
-|               datalad siblings -d &quot;/tmp/tmpvogvb80o&quot; enable -s github-lfs
-2021-12-17 09:40:07,590 - HIPSNP - INFO - Getting files: [PosixPath(&#39;/tmp/tmpvogvb80o/imputation/example_c1_v0.sample&#39;), PosixPath(&#39;/tmp/tmpvogvb80o/imputation/example_c1_v0.bgen&#39;)]
-2021-12-17 09:40:10,534 - HIPSNP - INFO - Converting to BGEN: qctool -g /tmp/tmpvogvb80o/imputation/example_c1_v0.bgen -s /tmp/tmpvogvb80o/imputation/example_c1_v0.sample -incl-rsids /tmp/tmpvogvb80o/rsids_chromosome1.txt -og /tmp/tmpvogvb80o/chromosome1.bgen -ofiletype bgen_v1.2 -bgen-bits 8
+|               datalad siblings -d &quot;/tmp/tmpfsa73rbn&quot; enable -s github-lfs
+2021-12-17 09:40:15,378 - HIPSNP - INFO - Getting files: [PosixPath(&#39;/tmp/tmpfsa73rbn/imputation/example_c1_v0.sample&#39;), PosixPath(&#39;/tmp/tmpfsa73rbn/imputation/example_c1_v0.bgen&#39;)]
+2021-12-17 09:40:17,880 - HIPSNP - INFO - Converting to BGEN: qctool -g /tmp/tmpfsa73rbn/imputation/example_c1_v0.bgen -s /tmp/tmpfsa73rbn/imputation/example_c1_v0.sample -incl-rsids /tmp/tmpfsa73rbn/rsids_chromosome1.txt -og /tmp/tmpfsa73rbn/chromosome1.bgen -ofiletype bgen_v1.2 -bgen-bits 8
 
-2021-12-17 09:40:14,892 - HIPSNP - INFO - Reading 1 bgen files...
-2021-12-17 09:40:14,893 - HIPSNP - INFO - Reading /tmp/tmpvogvb80o/chromosome1.bgen
+2021-12-17 09:40:21,177 - HIPSNP - INFO - Reading 1 bgen files...
+2021-12-17 09:40:21,178 - HIPSNP - INFO - Reading /tmp/tmpfsa73rbn/chromosome1.bgen
 </pre></div>
 </div>
 <p>Now we are ready to obtain the alleles of each rsid and sample in the data</p>
@@ -151,8 +151,8 @@ as work and data directory.</p>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2021-12-17 09:40:14,914 - HIPSNP - INFO - Samples are not consolidated across RSIDs. Consolidating...
-2021-12-17 09:40:14,915 - HIPSNP - INFO - Calculating genotypes for 2 SNPs and                     500 samples ...
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2021-12-17 09:40:21,190 - HIPSNP - INFO - Samples are not consolidated across RSIDs. Consolidating...
+2021-12-17 09:40:21,190 - HIPSNP - INFO - Calculating genotypes for 2 SNPs and                     500 samples ...
 
 GG    341
 AG    147
@@ -172,8 +172,8 @@ the weights associated to each allele and RSID. We can retrieve one from
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2021-12-17 09:40:14,936 - HIPSNP - INFO - Samples are not consolidated across RSIDs. Consolidating...
-2021-12-17 09:40:14,937 - HIPSNP - INFO - Calculating riskscores for 2 SNPs and                     500 samples ...
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>2021-12-17 09:40:21,207 - HIPSNP - INFO - Samples are not consolidated across RSIDs. Consolidating...
+2021-12-17 09:40:21,208 - HIPSNP - INFO - Calculating riskscores for 2 SNPs and                     500 samples ...
 </pre></div>
 </div>
 <p>Then, for example, we can visualize the risk score of each sample</p>
@@ -188,7 +188,7 @@ the weights associated to each allele and RSID. We can retrieve one from
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/shutil.html#shutil.rmtree" title="shutil.rmtree" class="sphx-glr-backref-module-shutil sphx-glr-backref-type-py-function"><span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">workdir</span></a><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  12.442 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  11.403 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-plot-example-mock-data-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../_downloads/676865f9a5f5d9ec02deef362b2ee8d5/plot_example_mock_data.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_example_mock_data.py</span></code></a></p>
@@ -235,6 +235,7 @@ the weights associated to each allele and RSID. We can retrieve one from
     <dl>
       <dt>Tags</dt>
       <dd><a href="../../v0.0.1/index.html">v0.0.1</a></dd>
+      <dd><a href="../../v0.0.2/index.html">v0.0.2</a></dd>
     </dl>
     <dl>
       <dt>Branches</dt>

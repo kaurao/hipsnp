@@ -67,13 +67,13 @@ Set the logging level to info to see extra information
 
  .. code-block:: none
 
-    2021-12-17 09:40:03,904 - HIPSNP - INFO - ===== Lib Versions =====
-    2021-12-17 09:40:03,904 - HIPSNP - INFO - numpy: 1.21.4
-    2021-12-17 09:40:03,904 - HIPSNP - INFO - scipy: 1.7.3
-    2021-12-17 09:40:03,904 - HIPSNP - INFO - bgen_reader: 4.0.8
-    2021-12-17 09:40:03,904 - HIPSNP - INFO - datalad: 0.15.4
-    2021-12-17 09:40:03,904 - HIPSNP - INFO - pandas: 1.3.5
-    2021-12-17 09:40:03,905 - HIPSNP - INFO - ========================
+    2021-12-17 09:40:10,826 - HIPSNP - INFO - ===== Lib Versions =====
+    2021-12-17 09:40:10,826 - HIPSNP - INFO - numpy: 1.21.4
+    2021-12-17 09:40:10,826 - HIPSNP - INFO - scipy: 1.7.3
+    2021-12-17 09:40:10,826 - HIPSNP - INFO - bgen_reader: 4.0.8
+    2021-12-17 09:40:10,826 - HIPSNP - INFO - datalad: 0.15.4
+    2021-12-17 09:40:10,826 - HIPSNP - INFO - pandas: 1.3.5
+    2021-12-17 09:40:10,826 - HIPSNP - INFO - ========================
 
 
 
@@ -120,21 +120,21 @@ as work and data directory.
 
  .. code-block:: none
 
-    2021-12-17 09:40:04,025 - HIPSNP - INFO - Chromosomes needed: ['1']
-    2021-12-17 09:40:04,026 - HIPSNP - INFO - Getting chromosome 1 for RSID(s) ['RSID_1' 'RSID_2' 'RSID_3']
-    [INFO] Cloning dataset to Dataset(/tmp/tmpvogvb80o) 
-    [INFO] Attempting to clone from https://gin.g-node.org/juaml/datalad-example-bgen to /tmp/tmpvogvb80o 
+    2021-12-17 09:40:11,050 - HIPSNP - INFO - Chromosomes needed: ['1']
+    2021-12-17 09:40:11,051 - HIPSNP - INFO - Getting chromosome 1 for RSID(s) ['RSID_1' 'RSID_2' 'RSID_3']
+    [INFO] Cloning dataset to Dataset(/tmp/tmpfsa73rbn) 
+    [INFO] Attempting to clone from https://gin.g-node.org/juaml/datalad-example-bgen to /tmp/tmpfsa73rbn 
     [INFO] Start enumerating objects 
     [INFO] Start counting objects 
     [INFO] Start compressing objects 
-    [INFO] Completed clone attempts for Dataset(/tmp/tmpvogvb80o) 
+    [INFO] Completed clone attempts for Dataset(/tmp/tmpfsa73rbn) 
     [INFO] access to 1 dataset sibling github-lfs not auto-enabled, enable with:
-    |               datalad siblings -d "/tmp/tmpvogvb80o" enable -s github-lfs 
-    2021-12-17 09:40:07,590 - HIPSNP - INFO - Getting files: [PosixPath('/tmp/tmpvogvb80o/imputation/example_c1_v0.sample'), PosixPath('/tmp/tmpvogvb80o/imputation/example_c1_v0.bgen')]
-    2021-12-17 09:40:10,534 - HIPSNP - INFO - Converting to BGEN: qctool -g /tmp/tmpvogvb80o/imputation/example_c1_v0.bgen -s /tmp/tmpvogvb80o/imputation/example_c1_v0.sample -incl-rsids /tmp/tmpvogvb80o/rsids_chromosome1.txt -og /tmp/tmpvogvb80o/chromosome1.bgen -ofiletype bgen_v1.2 -bgen-bits 8
+    |               datalad siblings -d "/tmp/tmpfsa73rbn" enable -s github-lfs 
+    2021-12-17 09:40:15,378 - HIPSNP - INFO - Getting files: [PosixPath('/tmp/tmpfsa73rbn/imputation/example_c1_v0.sample'), PosixPath('/tmp/tmpfsa73rbn/imputation/example_c1_v0.bgen')]
+    2021-12-17 09:40:17,880 - HIPSNP - INFO - Converting to BGEN: qctool -g /tmp/tmpfsa73rbn/imputation/example_c1_v0.bgen -s /tmp/tmpfsa73rbn/imputation/example_c1_v0.sample -incl-rsids /tmp/tmpfsa73rbn/rsids_chromosome1.txt -og /tmp/tmpfsa73rbn/chromosome1.bgen -ofiletype bgen_v1.2 -bgen-bits 8
 
-    2021-12-17 09:40:14,892 - HIPSNP - INFO - Reading 1 bgen files...
-    2021-12-17 09:40:14,893 - HIPSNP - INFO - Reading /tmp/tmpvogvb80o/chromosome1.bgen
+    2021-12-17 09:40:21,177 - HIPSNP - INFO - Reading 1 bgen files...
+    2021-12-17 09:40:21,178 - HIPSNP - INFO - Reading /tmp/tmpfsa73rbn/chromosome1.bgen
 
 
 
@@ -162,8 +162,8 @@ Now we are ready to obtain the alleles of each rsid and sample in the data
 
  .. code-block:: none
 
-    2021-12-17 09:40:14,914 - HIPSNP - INFO - Samples are not consolidated across RSIDs. Consolidating...
-    2021-12-17 09:40:14,915 - HIPSNP - INFO - Calculating genotypes for 2 SNPs and                     500 samples ... 
+    2021-12-17 09:40:21,190 - HIPSNP - INFO - Samples are not consolidated across RSIDs. Consolidating...
+    2021-12-17 09:40:21,190 - HIPSNP - INFO - Calculating genotypes for 2 SNPs and                     500 samples ... 
 
     GG    341
     AG    147
@@ -200,8 +200,8 @@ https://www.pgscatalog.org/.
 
  .. code-block:: none
 
-    2021-12-17 09:40:14,936 - HIPSNP - INFO - Samples are not consolidated across RSIDs. Consolidating...
-    2021-12-17 09:40:14,937 - HIPSNP - INFO - Calculating riskscores for 2 SNPs and                     500 samples ... 
+    2021-12-17 09:40:21,207 - HIPSNP - INFO - Samples are not consolidated across RSIDs. Consolidating...
+    2021-12-17 09:40:21,208 - HIPSNP - INFO - Calculating riskscores for 2 SNPs and                     500 samples ... 
 
 
 
@@ -255,7 +255,7 @@ Since we used a temporary directory, we need to delete it
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 0 minutes  12.442 seconds)
+   **Total running time of the script:** ( 0 minutes  11.403 seconds)
 
 
 .. _sphx_glr_download_auto_examples_plot_example_mock_data.py:
