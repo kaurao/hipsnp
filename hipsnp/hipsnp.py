@@ -943,6 +943,7 @@ def genotype_from_datalad(
     logger.info(f'Chromosomes needed: {u_chr}')
     for t_chr in u_chr:
         bgen_out = workdir / f'chromosome{t_chr}.bgen'
+        sample_out = workdir / f'chromosome{t_chr}.sample'
         rsid_out =  workdir / f'rsids_chromosome{t_chr}.txt'
         t_rsid = df_chr.loc[df_chr['chromosomes'] == t_chr, 'rsids'].values
         logger.info(f'Getting chromosome {t_chr} for RSID(s) {t_rsid}')
@@ -980,7 +981,7 @@ def genotype_from_datalad(
         df.to_csv(rsid_out, index=False, header=False)
 
         cmd = (f'{qctool} -g {bgen_in} -s {sample_in} -incl-rsids {rsid_out} '
-               f'-og {bgen_out} -ofiletype bgen_v1.2 -bgen-bits 8')
+               f'-og {bgen_out} -os {sample_out} -ofiletype bgen_v1.2 -bgen-bits 8')
 
         logger.info(f'Converting to BGEN: {cmd}\n')
         result = subprocess.run(
