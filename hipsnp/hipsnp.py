@@ -884,7 +884,8 @@ def _find_chromosome_data(chr, datadir, subdir='imputation',
 def genotype_from_datalad(
         rsids, workdir, datadir, chromosomes=None,
         datalad_source="ria+http://ukb.ds.inm7.de#~genetic",
-        datalad_drop='get', recompute=False):
+        datalad_drop='get', chr_allowed = 'all',
+        recompute=False):
     """Reads a genotype from a datalad Dataset.
     A .bgen file with the selected RSIDs and chromosemes is created with
     qctool v2 (see notes) on the working directory.
@@ -937,14 +938,22 @@ def genotype_from_datalad(
     df_chr = get_chromosomes(rsids, chromosomes=chromosomes)
 
     u_chr = df_chr['chromosomes'].unique()
+    logger.info(f'Chromosomes needed: {u_chr}')
+    if chr_allowed == 'all':
+        chr_allowed = ['1', '2', '3', '4', '5', '6', '7',\
+                '8', '9', '10', '11', '12', '13', '14',\
+                '15', '16', '17', '18', '19', '20', '21',\
+                '22', 'X', 'Y']
+    logger.info(f'Chromosomes needed: {chr_allowed}')
+    u_chr = list(set(u_chr).intersection(set(chr_allowed)))
     files = None
     files_to_read = []
     ds = None
-    logger.info(f'Chromosomes needed: {u_chr}')
+    logger.info(f'Chromosomes retained: {u_chr}')
     for t_chr in u_chr:
-        bgen_out = workdir / f'chromosome{t_chr}.bgen'
-        sample_out = workdir / f'chromosome{t_chr}.sample'
-        rsid_out =  workdir / f'rsids_chromosome{t_chr}.txt'
+        bgen_out = workdir / f'chr{t_chr}.bgen'
+        sample_out = workdir / f'chr{t_chr}.sample'
+        rsid_out =  workdir / f'chr{t_chr}_rsids.txt'
         t_rsid = df_chr.loc[df_chr['chromosomes'] == t_chr, 'rsids'].values
         logger.info(f'Getting chromosome {t_chr} for RSID(s) {t_rsid}')
 
