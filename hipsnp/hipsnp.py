@@ -862,6 +862,10 @@ def _find_chromosome_data(chr, datadir, subdir='imputation',
             source=datalad_source, path=datadir)
 
     files = list((datadir / subdir).glob(f'*_c{chr}_*'))
+    if len(files) != 1:
+        raise_error(f'No files or multiple files were found '
+                f'on disk for chromosome {chr}: {files}')
+
     got_files = []
     if datalad_source:
         logger.info(f'Getting files: {files}')
@@ -875,8 +879,6 @@ def _find_chromosome_data(chr, datadir, subdir='imputation',
                     f'dataset: {status}')
             elif f_val['status'] == 'ok' and f_val['type'] == 'file':
                 got_files.append(f_val['path'])
-    if len(files) == 0:
-        raise_error(f'No files were found on disk for chromosome {chr}')
 
     return files, ds, got_files
 
@@ -944,7 +946,7 @@ def genotype_from_datalad(
                 '8', '9', '10', '11', '12', '13', '14',\
                 '15', '16', '17', '18', '19', '20', '21',\
                 '22', 'X', 'Y']
-    logger.info(f'Chromosomes needed: {chr_allowed}')
+    logger.info(f'Chromosomes allowed: {chr_allowed}')
     u_chr = list(set(u_chr).intersection(set(chr_allowed)))
     files = None
     files_to_read = []
