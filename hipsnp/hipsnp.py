@@ -11,6 +11,8 @@ from functools import reduce
 
 from . utils import warn, raise_error, logger, get_qctool
 
+import re
+import collections
 
 class Genotype():
     """Genotype class. Models a genotype including the list of chromosomes,
@@ -540,7 +542,8 @@ np.array of size (n_samples, 3))))
                 _, iX_unique_in_file = np.unique(bgen.rsids, return_index=True)
                 if (iX_unique_in_file.shape[0] !=
                         bgen.rsids.shape[0]):  # type: ignore
-                    warn(f'Duplicated RSIDs in file {f}')
+                    duplicates = [item for item, count in collections.Counter(bgen.rsids).items() if count > 1]
+                    warn(f'Duplicated RSIDs in file {f}: {duplicates}')
 
                 # find duplicates with previous files
                 if (metadata is not None and
@@ -862,9 +865,10 @@ def _find_chromosome_data(chr, datadir, subdir='imputation',
             source=datalad_source, path=datadir)
 
     files = list((datadir / subdir).glob(f'*_c{chr}_*'))
-    if len(files) != 1:
-        raise_error(f'No files or multiple files were found '
-                f'on disk for chromosome {chr}: {files}')
+    bgenfiles = list((datadir / subdir).glob(f'*_c{chr}_*.bgen'))
+    if len(bgenfiles) != 1:
+        raise_error(f'No files or multiple bgen files were found '
+                f'on disk for chromosome {chr}: {bgenfiles}')
 
     got_files = []
     if datalad_source:
@@ -882,13 +886,60 @@ def _find_chromosome_data(chr, datadir, subdir='imputation',
 
     return files, ds, got_files
 
-
 def genotype_from_datalad(
         rsids, workdir, datadir, chromosomes=None,
         datalad_source="ria+http://ukb.ds.inm7.de#~genetic",
         datalad_drop='get', chr_allowed = 'all',
-        recompute=False):
+        valid_rsids=True, recompute=False):
     """Reads a genotype from a datalad Dataset.
+    A .bgen file with the selected RSIDs and chromosemes is created with
+    qctool v2 (see notes) on the working directory.
+
+    Parameters
+    ----------
+    rsids : str or list of str
+        list of RSIDs to be included in the genotype
+    workdir : str
+        Path to save bgen and CSV files.
+    datadir : str, optional
+        Path to the datalad dataset or directory with the chromosome files.
+    chromosomes : list of str | None
+        Chromosomes to process. If None (default), use all chromosomes and get
+        that information from ensmebl.org (requires internet connection)
+        There should be one chromosome of each rsid provided.
+    datalad_source : str, optional
+        datalad data source, by default "ria+http://ukb.ds.inm7.de#~genetic"
+    qctool : str, optional
+        path to qctool, by default None
+    datalad_drop : bool, optional
+        If True, each chromosome file will be removed after the genotype is
+        read. If False, the dataset will be kept. If 'get' (default), only the
+        the files got during the process will be removed.
+    recompute : bool, optional
+        whether to recompute re-calculation (based on output file presence),
+        by default False
+
+    Returns
+    -------
+    Genotype
+        The genotype
+
+    Notes
+    -----
+    qctool must be installed (see https://www.well.ox.ac.uk/~gav/qctool/)
+
+    """
+    files_to_read,rsids,chromosomes = data_from_datalad(rsids, workdir, datadir,\
+            chromosomes,datalad_source,datalad_drop,chr_allowed,valid_rsids,recompute)
+    return read_bgen(files_to_read)
+
+
+def data_from_datalad(
+        rsids, workdir, datadir, chromosomes=None,
+        datalad_source="ria+http://ukb.ds.inm7.de#~genetic",
+        datalad_drop='get', chr_allowed = 'all',
+        valid_rsids=True, recompute=False):
+    """Gets data from a datalad Dataset.
     A .bgen file with the selected RSIDs and chromosemes is created with
     qctool v2 (see notes) on the working directory.
 
@@ -937,6 +988,17 @@ def genotype_from_datalad(
             f'To recompute, the working directory must be empty: {workdir}')
     workdir.mkdir(parents=True, exist_ok=True)
 
+    if valid_rsids:
+        num_rsid = len(rsids)
+        logger.info(f'total {num_rsid} RSIDs')
+        reg = re.compile(r'^rs')
+        ivalid = [bool(re.search(reg, xx)) for xx in rsids]
+        rsids = [xx for (ii, xx) in zip(ivalid, rsids) if ii]
+        if chromosomes is not None:
+            chromosomes = [xx for (ii, xx) in zip(ivalid, chromosomes) if ii]
+        num_rsid = len(rsids)
+        logger.info(f'retaining {num_rsid} valid RSIDs')
+
     df_chr = get_chromosomes(rsids, chromosomes=chromosomes)
 
     u_chr = df_chr['chromosomes'].unique()
@@ -957,6 +1019,13 @@ def genotype_from_datalad(
         sample_out = workdir / f'chr{t_chr}.sample'
         rsid_out =  workdir / f'chr{t_chr}_rsids.txt'
         t_rsid = df_chr.loc[df_chr['chromosomes'] == t_chr, 'rsids'].values
+        # make sure that there are no duplicates
+        duplicates = [item for item, count in collections.Counter(t_rsid).items() if count > 1]
+        if len(duplicates) > 0:
+            raise_error(
+                    f'Chromosome {t_chr} contains duplicate RSIDs '
+                    f'{duplicates}')
+
         logger.info(f'Getting chromosome {t_chr} for RSID(s) {t_rsid}')
 
         if recompute is False and bgen_out.is_file():
@@ -1007,4 +1076,5 @@ def genotype_from_datalad(
             else:
                 ds.drop(files)  # type: ignore
 
-    return read_bgen(files_to_read)
+    return files_to_read,rsids,chromosomes
+
